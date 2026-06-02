@@ -1,8 +1,25 @@
 // ===== NAVIGATION =====
+let bretagneMap = null;
+
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   window.scrollTo(0, 0);
+
+  if (name === 'search') {
+    if (!bretagneMap) {
+      bretagneMap = L.map('map-container').setView([48.15, -2.9], 8);
+      L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        {
+          attribution: 'Tiles &copy; Esri &mdash; Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, GIS User Community',
+          maxZoom: 18
+        }
+      ).addTo(bretagneMap);
+    } else {
+      bretagneMap.invalidateSize();
+    }
+  }
 }
 
 // ===== BUILD YEAR CHART =====

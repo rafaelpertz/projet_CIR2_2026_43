@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Squelette Back-End – IRVE CIR2 2026</title>
+  <style>
+    /* ===== RESET & BASE ===== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; }
+ 
+    /* ===== NAVIGATION ENTRE LES PAGES (démo) ===== */
+    #demo-nav {
+      position: fixed; top: 0; left: 0; width: 100%; z-index: 9999;
+      background: #0d0d1a; padding: 8px 16px;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      border-bottom: 2px solid #e74c3c;
+    }
+    #demo-nav span { color: #e74c3c; font-size: 11px; font-weight: bold; letter-spacing: 1px; margin-right: 8px; }
+    .demo-btn {
+      background: #1e1e3f; color: #ccc; border: 1px solid #444;
+      padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 11px;
+      transition: all 0.2s;
+    }
+    .demo-btn:hover, .demo-btn.active { background: #e74c3c; color: #fff; border-color: #e74c3c; }
+ 
+    /* ===== WRAPPER ===== */
+    .page-wrapper { display: none; padding-top: 44px; min-height: 100vh; flex-direction: column; }
+    .page-wrapper.visible { display: flex; }
+ 
+    /* ===== HEADER BACK ===== */
+    header {
+      background: #1a1a2e;
+      border-bottom: 3px solid #e74c3c;
+      padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px;
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .logo {
+      width: 36px; height: 36px; background: #e74c3c; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: bold; color: white; font-size: 12px;
+    }
+    .site-title { color: #fff; font-size: 16px; font-weight: bold; }
+    .site-title span { color: #e74c3c; }
+    nav { display: flex; gap: 4px; }
+    nav a {
+      color: #bbb; text-decoration: none; padding: 6px 14px; border-radius: 4px;
+      font-size: 13px; transition: all 0.2s; cursor: pointer;
+    }
+    nav a:hover { background: #2d2d4e; color: #fff; }
+    nav a.active { background: #e74c3c; color: #fff; }
+    .badge-back {
+      background: #e74c3c; color: white; font-size: 10px; padding: 2px 8px;
+      border-radius: 12px; letter-spacing: 1px; font-weight: bold;
+    }
+ 
+    /* ===== MAIN ===== */
+    main { flex: 1; padding: 24px; max-width: 1200px; width: 100%; margin: 0 auto; }
+ 
+    /* ===== FOOTER ===== */
+    footer {
+      background: #0d0d1a; border-top: 2px solid #e74c3c;
+      padding: 12px 24px; text-align: center;
+      color: #666; font-size: 12px;
+    }
+    footer span { color: #e74c3c; }
+ 
+    /* ===== PAGE TITLE ===== */
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; padding-bottom: 12px;
+      border-bottom: 1px solid #2d2d4e;
+    }
+    .page-header h1 { color: #fff; font-size: 20px; }
+    .page-header h1 .icon { margin-right: 8px; }
+    .breadcrumb { color: #666; font-size: 12px; }
+    .breadcrumb span { color: #e74c3c; }
+ 
+    /* ===== BOUTONS ===== */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 5px; font-size: 13px; cursor: pointer; border: none; text-decoration: none; transition: all 0.2s; }
+    .btn-primary { background: #e74c3c; color: white; }
+    .btn-primary:hover { background: #c0392b; }
+    .btn-secondary { background: #2d2d4e; color: #bbb; border: 1px solid #444; }
+    .btn-secondary:hover { background: #3d3d6e; color: #fff; }
+    .btn-warning { background: #e67e22; color: white; }
+    .btn-warning:hover { background: #d35400; }
+    .btn-info { background: #2980b9; color: white; }
+    .btn-info:hover { background: #1a6fa0; }
+    .btn-danger { background: #7f1d1d; color: #fca5a5; border: 1px solid #991b1b; }
+    .btn-sm { padding: 4px 10px; font-size: 11px; }
+ 
+    /* ===== CARDS ===== */
+    .card {
+      background: #16213e; border: 1px solid #2d2d4e;
+      border-radius: 8px; padding: 20px; margin-bottom: 16px;
+    }
+    .card-title { color: #e74c3c; font-size: 13px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+ 
+    /* ===== STATS GRID ===== */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .stat-card {
+      background: #16213e; border: 1px solid #2d2d4e; border-radius: 8px;
+      padding: 16px; text-align: center;
+    }
+    .stat-card .stat-value { font-size: 28px; font-weight: bold; color: #e74c3c; }
+    .stat-card .stat-label { font-size: 11px; color: #888; margin-top: 4px; }
+ 
+    /* ===== TABLE ===== */
+    .table-wrapper { overflow-x: auto; border-radius: 8px; border: 1px solid #2d2d4e; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead tr { background: #1a1a2e; }
+    thead th { padding: 12px 14px; color: #e74c3c; font-weight: bold; text-align: left; border-bottom: 2px solid #e74c3c; white-space: nowrap; }
+    tbody tr { background: #16213e; border-bottom: 1px solid #2d2d4e; transition: background 0.15s; }
+    tbody tr:hover { background: #1e1e3f; }
+    tbody td { padding: 10px 14px; color: #ccc; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; }
+    .tag-green { background: #064e3b; color: #6ee7b7; }
+    .tag-blue { background: #1e3a5f; color: #93c5fd; }
+    .tag-orange { background: #431407; color: #fdba74; }
+ 
+    /* ===== FORM ===== */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 12px; color: #888; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+    .required { color: #e74c3c; }
+    input, select, textarea {
+      background: #0d0d1a; border: 1px solid #2d2d4e; color: #eee;
+      padding: 9px 12px; border-radius: 5px; font-size: 13px; width: 100%;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #e74c3c; }
+    input::placeholder, textarea::placeholder { color: #444; }
+    textarea { resize: vertical; min-height: 80px; }
+    .form-hint { font-size: 11px; color: #555; }
+ 
+    /* ===== DETAIL VIEW ===== */
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    .detail-row { display: contents; }
+    .detail-row dt {
+      background: #1a1a2e; color: #888; font-size: 11px; text-transform: uppercase;
+      padding: 10px 14px; border-bottom: 1px solid #2d2d4e; border-right: 1px solid #2d2d4e;
+      font-weight: bold; letter-spacing: 0.5px;
+    }
+    .detail-row dd {
+      background: #16213e; color: #eee; font-size: 13px;
+      padding: 10px 14px; border-bottom: 1px solid #2d2d4e;
+    }
+ 
+    /* ===== URL bar ===== */
+    .url-bar {
+      background: #0d0d1a; border: 1px solid #2d2d4e; border-radius: 20px;
+      padding: 4px 14px; font-size: 11px; color: #666;
+      display: inline-block; margin-bottom: 20px;
+    }
+    .url-bar .url-path { color: #e74c3c; }
+ 
+    /* ===== ALERT ===== */
+    .alert { padding: 12px 16px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; }
+    .alert-info { background: #1e3a5f; border-left: 3px solid #2980b9; color: #93c5fd; }
+    .alert-success { background: #064e3b; border-left: 3px solid #27ae60; color: #6ee7b7; }
+    .alert-warning { background: #431407; border-left: 3px solid #e67e22; color: #fdba74; }
+ 
+    /* ===== SECTION SEPARATOR ===== */
+    .section-sep { border: none; border-top: 1px solid #2d2d4e; margin: 20px 0; }
+ 
+    /* ===== PAGINATION ===== */
+    .pagination { display: flex; gap: 6px; align-items: center; margin-top: 16px; }
+    .page-num { padding: 5px 10px; border-radius: 4px; background: #2d2d4e; color: #bbb; font-size: 12px; cursor: pointer; }
+    .page-num.active { background: #e74c3c; color: #fff; }
+    .page-info { font-size: 12px; color: #666; margin-left: auto; }
+  </style>
+</head>
+<body>
+ 
+<!-- ===== DÉMO NAV ===== -->
+<div id="demo-nav">
+  <span>📐 SQUELETTE BACK-END</span>
+  <button class="demo-btn active" onclick="showPage('accueil')">🏠 /back/ Accueil</button>
+  <button class="demo-btn" onclick="showPage('liste')">📋 /back/liste Liste</button>
+  <button class="demo-btn" onclick="showPage('creation')">➕ /back/create Création</button>
+  <button class="demo-btn" onclick="showPage('modification')">✏️ /back/edit/{id} Modification</button>
+  <button class="demo-btn" onclick="showPage('detail')">🔍 /back/detail/{id} Détail</button>
+</div>
+ 
+<!-- ===================================================== -->
+<!--  PAGE 1 : ACCUEIL /back/                              -->
+<!-- ===================================================== -->
+<div class="page-wrapper visible" id="page-accueil">
+  <header>
+    <div class="header-left">
+      <div class="logo">IRVE</div>
+      <div class="site-title">Admin<span>IRVE</span></div>
+      <span class="badge-back">BACK-END</span>
+    </div>
+    <nav>
+      <a class="active" onclick="showPage('accueil')">🏠 Accueil</a>
+      <a onclick="showPage('liste')">📋 Liste</a>
+      <a onclick="showPage('creation')">➕ Ajouter</a>
+    </nav>
+  </header>
+ 
+  <main>
+    <div class="url-bar">http://projet-cir2-XX <span class="url-path">/ back /</span></div>
+ 
+    <div class="page-header">
+      <h1><span class="icon">🏠</span>Tableau de bord administrateur</h1>
+      <div class="breadcrumb">Back-end &rsaquo; <span>Accueil</span></div>
+    </div>
+ 
+    <div class="alert alert-info">
+      ℹ️ Interface d'administration des points de recharge IRVE en Bretagne. Ici vous pouvez visualiser, créer et modifier les installations.
+    </div>
+ 
+    <!-- KPIs -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">4 821</div>
+        <div class="stat-label">Total installations</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">312</div>
+        <div class="stat-label">Aménageurs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">5</div>
+        <div class="stat-label">Départements</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">8</div>
+        <div class="stat-label">Types de prise</div>
+      </div>
+    </div>
+ 
+    <!-- Table preview 100 items -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div class="card-title">📋 Dernières installations (100 max)</div>
+        <button class="btn btn-primary" onclick="showPage('creation')">➕ Ajouter une installation</button>
+      </div>
+ 
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Aménageur</th>
+              <th>Localité</th>
+              <th>Nb PDC</th>
+              <th>Type prise</th>
+              <th>Puissance (kW)</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>781</td>
+              <td>LE ROUX LOISIRS</td>
+              <td>Rennes (35)</td>
+              <td><span class="tag tag-blue">3</span></td>
+              <td>T2</td>
+              <td>22</td>
+              <td style="display:flex;gap:6px;">
+                <button class="btn btn-info btn-sm" onclick="showPage('detail')">👁 Voir</button>
+                <button class="btn btn-warning btn-sm" onclick="showPage('modification')">✏️ Éditer</button>
+              </td>
+            </tr>
+            <tr>
+              <td>867</td>
+              <td>R3</td>
+              <td>Brest (29)</td>
+              <td><span class="tag tag-green">7</span></td>
+              <td>T3</td>
+              <td>50</td>
+              <td style="display:flex;gap:6px;">
+                <button class="btn btn-info btn-sm" onclick="showPage('detail')">👁 Voir</button>
+                <button class="btn btn-warning btn-sm" onclick="showPage('modification')">✏️ Éditer</button>
+              </td>
+            </tr>
+            <tr>
+              <td>1234</td>
+              <td>ELECTRIC 55 CHARGING</td>
+              <td>Nantes (44)</td>
+              <td><span class="tag tag-orange">2</span></td>
+              <td>T2 / T3</td>
+              <td>7.4</td>
+              <td style="display:flex;gap:6px;">
+                <button class="btn btn-info btn-sm" onclick="showPage('detail')">👁 Voir</button>
+                <button class="btn btn-warning btn-sm" onclick="showPage('modification')">✏️ Éditer</button>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="7" style="text-align:center;color:#444;font-style:italic;padding:14px;">
+                … 97 autres enregistrements (limité à 100) …
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+ 
+  <footer>
+    <span>Votre Nom</span> — Groupe CIR2 — 2026
+  </footer>
+</div>
+ 
+<!-- ===================================================== -->
+<!--  PAGE 2 : LISTE /back/liste                           -->
+<!-- ===================================================== -->
+<div class="page-wrapper" id="page-liste">
+  <header>
+    <div class="header-left">
+      <div class="logo">IRVE</div>
+      <div class="site-title">Admin<span>IRVE</span></div>
+      <span class="badge-back">BACK-END</span>
+    </div>
+    <nav>
+      <a onclick="showPage('accueil')">🏠 Accueil</a>
+      <a class="active" onclick="showPage('liste')">📋 Liste</a>
+      <a onclick="showPage('creation')">➕ Ajouter</a>
+    </nav>
+  </header>
+ 
+  <main>
+    <div class="url-bar">http://projet-cir2-XX <span class="url-path">/ back / liste</span></div>
+ 
+    <div class="page-header">
+      <h1><span class="icon">📋</span>Toutes les installations</h1>
+      <div class="breadcrumb">Back-end &rsaquo; <span>Liste</span></div>
+    </div>
+ 
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="color:#888;font-size:13px;">4 821 enregistrements — affichage limité à 100</div>
+      <button class="btn btn-primary" onclick="showPage('creation')">➕ Nouvelle installation</button>
+    </div>
+ 
+    <div class="card" style="padding:0;">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Aménageur</th>
+              <th>Opérateur</th>
+              <th>Localité</th>
+              <th>Nb PDC</th>
+              <th>Type prise</th>
+              <th>Puissance</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>781</td><td>LE ROUX LOISIRS</td><td>Freshmile</td><td>Rennes (35)</td>
+              <td><span class="tag tag-blue">3</span></td><td>T2</td><td>22 kW</td>
+              <td style="display:flex;gap:4px;">
+                <button class="btn btn-info btn-sm" onclick="showPage('detail')">👁</button>
+                <button class="btn btn-warning btn-sm" onclick="showPage('modification')">✏️</button>
+              </td>
+            </tr>
+            <tr>
+              <td>867</td><td>R3</td><td>R3</td><td>Brest (29)</td>
+              <td><span class="tag tag-green">7</span></td><td>T3</td><td>50 kW</td>
+              <td style="display:flex;gap:4px;">
+                <button class="btn btn-info btn-sm" onclick="showPage('detail')">👁</button>
+                <button class="btn btn-warning btn-sm" onclick="showPage('modification')">✏️</button>
+              </td>
+            </tr>
+            <tr>
+              <td>1344</td><td>SARL Thouzeau LM</td><td>Evbox</td><td>Caen (14)</td>
+              <td><span class="tag tag-orange">1</span></td><td>T2</td><td>7.4 kW</td>
+              <td style="display:flex;gap:4px;">
+                <button class="btn btn-info btn-sm" onclick="showPage('detail')">👁</button>
+                <button class="btn btn-warning btn-sm" onclick="showPage('modification')">✏️</button>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="8" style="text-align:center;color:#444;font-style:italic;padding:14px;">
+                … 97 autres enregistrements …
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+ 
+    <div class="pagination">
+      <div class="page-num active">1</div>
+      <div class="page-num">2</div>
+      <div class="page-num">3</div>
+      <div class="page-num">…</div>
+      <div class="page-num">97</div>
+      <div class="page-info">Affichage 1–50 sur 4 821 résultats</div>
+    </div>
+  </main>
+ 
+  <footer>
+    <span>Votre Nom</span> — Groupe CIR2 — 2026
+  </footer>
+</div>
+ 
+<!-- ===================================================== -->
+<!--  PAGE 3 : CRÉATION /back/create                       -->
+<!-- ===================================================== -->
+<div class="page-wrapper" id="page-creation">
+  <header>
+    <div class="header-left">
+      <div class="logo">IRVE</div>
+      <div class="site-title">Admin<span>IRVE</span></div>
+      <span class="badge-back">BACK-END</span>
+    </div>
+    <nav>
+      <a onclick="showPage('accueil')">🏠 Accueil</a>
+      <a onclick="showPage('liste')">📋 Liste</a>
+      <a class="active" onclick="showPage('creation')">➕ Ajouter</a>
+    </nav>
+  </header>
+ 
+  <main>
+    <div class="url-bar">http://projet-cir2-XX <span class="url-path">/ back / create</span></div>
+ 
+    <div class="page-header">
+      <h1><span class="icon">➕</span>Ajouter un point de recharge</h1>
+      <div class="breadcrumb">Back-end &rsaquo; Liste &rsaquo; <span>Création</span></div>
+    </div>
+ 
+    <form>
+      <!-- Section Aménageur -->
+      <div class="card">
+        <div class="card-title">🏢 Informations aménageur</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nom aménageur <span class="required">*</span></label>
+            <input type="text" placeholder="ex: LE ROUX LOISIRS" />
+          </div>
+          <div class="form-group">
+            <label>Siren aménageur <span class="required">*</span></label>
+            <input type="text" placeholder="ex: 453386120" />
+          </div>
+          <div class="form-group">
+            <label>Contact aménageur</label>
+            <input type="email" placeholder="contact@example.com" />
+          </div>
+          <div class="form-group">
+            <label>Nom opérateur <span class="required">*</span></label>
+            <input type="text" placeholder="ex: Freshmile" />
+          </div>
+        </div>
+      </div>
+ 
+      <!-- Section Installation -->
+      <div class="card">
+        <div class="card-title">⚡ Caractéristiques de l'installation</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nom enseigne</label>
+            <input type="text" placeholder="ex: Réseau A" />
+          </div>
+          <div class="form-group">
+            <label>Date de mise en service <span class="required">*</span></label>
+            <input type="date" />
+          </div>
+          <div class="form-group">
+            <label>Nombre de PDC <span class="required">*</span></label>
+            <input type="number" placeholder="ex: 3" min="1" />
+          </div>
+          <div class="form-group">
+            <label>Type de prise <span class="required">*</span></label>
+            <select>
+              <option value="">-- Sélectionner --</option>
+              <option>T2 (Type 2)</option>
+              <option>T3 (CCS Combo)</option>
+              <option>CHAdeMO</option>
+              <option>EF (Domestique)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Puissance nominale (kW) <span class="required">*</span></label>
+            <input type="number" placeholder="ex: 22" step="0.1" />
+          </div>
+          <div class="form-group">
+            <label>Accès recharge</label>
+            <select>
+              <option>Accès libre</option>
+              <option>Accès réservé</option>
+              <option>Accès payant</option>
+            </select>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- Section Localisation -->
+      <div class="card">
+        <div class="card-title">📍 Localisation</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Adresse <span class="required">*</span></label>
+            <input type="text" placeholder="ex: 12 rue de la Paix" />
+          </div>
+          <div class="form-group">
+            <label>Commune <span class="required">*</span></label>
+            <input type="text" placeholder="ex: Rennes" />
+          </div>
+          <div class="form-group">
+            <label>Code postal</label>
+            <input type="text" placeholder="ex: 35000" />
+          </div>
+          <div class="form-group">
+            <label>Département <span class="required">*</span></label>
+            <select>
+              <option value="">-- Sélectionner --</option>
+              <option>29 – Finistère</option>
+              <option>35 – Ille-et-Vilaine</option>
+              <option>22 – Côtes-d'Armor</option>
+              <option>56 – Morbihan</option>
+              <option>44 – Loire-Atlantique</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Latitude <span class="required">*</span></label>
+            <input type="number" placeholder="ex: 48.1173" step="0.00001" />
+          </div>
+          <div class="form-group">
+            <label>Longitude <span class="required">*</span></label>
+            <input type="number" placeholder="ex: -1.6778" step="0.00001" />
+          </div>
+        </div>
+      </div>
+ 
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button type="button" class="btn btn-secondary" onclick="showPage('liste')">✖ Annuler</button>
+        <button type="submit" class="btn btn-primary">💾 Enregistrer l'installation</button>
+      </div>
+    </form>
+  </main>
+ 
+  <footer>
+    <span>Votre Nom</span> — Groupe CIR2 — 2026
+  </footer>
+</div>
+ 
+<!-- ===================================================== -->
+<!--  PAGE 4 : MODIFICATION /back/edit/{id}                -->
+<!-- ===================================================== -->
+<div class="page-wrapper" id="page-modification">
+  <header>
+    <div class="header-left">
+      <div class="logo">IRVE</div>
+      <div class="site-title">Admin<span>IRVE</span></div>
+      <span class="badge-back">BACK-END</span>
+    </div>
+    <nav>
+      <a onclick="showPage('accueil')">🏠 Accueil</a>
+      <a onclick="showPage('liste')">📋 Liste</a>
+      <a onclick="showPage('creation')">➕ Ajouter</a>
+    </nav>
+  </header>
+ 
+  <main>
+    <div class="url-bar">http://projet-cir2-XX <span class="url-path">/ back / edit / 781</span></div>
+ 
+    <div class="page-header">
+      <h1><span class="icon">✏️</span>Modifier l'installation #781</h1>
+      <div class="breadcrumb">Back-end &rsaquo; Liste &rsaquo; <span>Modification</span></div>
+    </div>
+ 
+    <div class="alert alert-warning">
+      ⚠️ Vous modifiez l'installation <strong>#781 – LE ROUX LOISIRS</strong>. Les champs marqués <span style="color:#e74c3c">*</span> sont obligatoires.
+    </div>
+ 
+    <form>
+      <div class="card">
+        <div class="card-title">🏢 Informations aménageur</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nom aménageur <span class="required">*</span></label>
+            <input type="text" value="LE ROUX LOISIRS" />
+          </div>
+          <div class="form-group">
+            <label>Siren aménageur <span class="required">*</span></label>
+            <input type="text" value="453386120" />
+          </div>
+          <div class="form-group">
+            <label>Contact aménageur</label>
+            <input type="email" value="tech@domainedependruc.com" />
+          </div>
+          <div class="form-group">
+            <label>Nom opérateur <span class="required">*</span></label>
+            <input type="text" value="freshmile" />
+          </div>
+        </div>
+      </div>
+ 
+      <div class="card">
+        <div class="card-title">⚡ Caractéristiques</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nombre de PDC <span class="required">*</span></label>
+            <input type="number" value="3" />
+          </div>
+          <div class="form-group">
+            <label>Type de prise <span class="required">*</span></label>
+            <select>
+              <option selected>T2 (Type 2)</option>
+              <option>T3 (CCS Combo)</option>
+              <option>CHAdeMO</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Puissance nominale (kW)</label>
+            <input type="number" value="22" />
+          </div>
+          <div class="form-group">
+            <label>Date de mise en service</label>
+            <input type="date" value="2021-06-15" />
+          </div>
+        </div>
+      </div>
+ 
+      <div class="card">
+        <div class="card-title">📍 Localisation</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Commune</label>
+            <input type="text" value="Rennes" />
+          </div>
+          <div class="form-group">
+            <label>Département</label>
+            <select><option selected>35 – Ille-et-Vilaine</option></select>
+          </div>
+          <div class="form-group">
+            <label>Latitude</label>
+            <input type="number" value="48.11726" />
+          </div>
+          <div class="form-group">
+            <label>Longitude</label>
+            <input type="number" value="-1.67792" />
+          </div>
+        </div>
+      </div>
+ 
+      <div style="display:flex;gap:10px;justify-content:space-between;">
+        <button type="button" class="btn btn-danger">🗑 Supprimer cette installation</button>
+        <div style="display:flex;gap:10px;">
+          <button type="button" class="btn btn-secondary" onclick="showPage('detail')">✖ Annuler</button>
+          <button type="submit" class="btn btn-primary">💾 Enregistrer les modifications</button>
+        </div>
+      </div>
+    </form>
+  </main>
+ 
+  <footer>
+    <span>Votre Nom</span> — Groupe CIR2 — 2026
+  </footer>
+</div>
+ 
+<!-- ===================================================== -->
+<!--  PAGE 5 : DÉTAIL /back/detail/{id}                    -->
+<!-- ===================================================== -->
+<div class="page-wrapper" id="page-detail">
+  <header>
+    <div class="header-left">
+      <div class="logo">IRVE</div>
+      <div class="site-title">Admin<span>IRVE</span></div>
+      <span class="badge-back">BACK-END</span>
+    </div>
+    <nav>
+      <a onclick="showPage('accueil')">🏠 Accueil</a>
+      <a onclick="showPage('liste')">📋 Liste</a>
+      <a onclick="showPage('creation')">➕ Ajouter</a>
+    </nav>
+  </header>
+ 
+  <main>
+    <div class="url-bar">http://projet-cir2-XX <span class="url-path">/ back / detail / 781</span></div>
+ 
+    <div class="page-header">
+      <h1><span class="icon">🔍</span>Détail installation #781</h1>
+      <div class="breadcrumb">Back-end &rsaquo; Liste &rsaquo; <span>Détail</span></div>
+    </div>
+ 
+    <div style="display:flex;gap:10px;margin-bottom:20px;">
+      <button class="btn btn-warning" onclick="showPage('modification')">✏️ Modifier</button>
+      <button class="btn btn-secondary" onclick="showPage('liste')">← Retour à la liste</button>
+    </div>
+ 
+    <div class="card">
+      <div class="card-title">🏢 Aménageur &amp; Opérateur</div>
+      <dl class="detail-grid">
+        <div class="detail-row"><dt>Nom aménageur</dt><dd>LE ROUX LOISIRS</dd></div>
+        <div class="detail-row"><dt>Siren aménageur</dt><dd>453386120</dd></div>
+        <div class="detail-row"><dt>Contact aménageur</dt><dd>tech@domainedependruc.com</dd></div>
+        <div class="detail-row"><dt>Nom opérateur</dt><dd>freshmile</dd></div>
+        <div class="detail-row"><dt>Contact opérateur</dt><dd>gregoire.schaffhauser@freshmile.com</dd></div>
+        <div class="detail-row"><dt>Téléphone opérateur</dt><dd>368781435</dd></div>
+        <div class="detail-row"><dt>Nom enseigne</dt><dd>reseau A</dd></div>
+      </dl>
+    </div>
+ 
+    <div class="card">
+      <div class="card-title">⚡ Caractéristiques de l'installation</div>
+      <dl class="detail-grid">
+        <div class="detail-row"><dt>ID station</dt><dd>FR*LRL*P0001</dd></div>
+        <div class="detail-row"><dt>Nom station</dt><dd>Station Parc Loisirs</dd></div>
+        <div class="detail-row"><dt>Nombre de PDC</dt><dd><span class="tag tag-blue">3</span></dd></div>
+        <div class="detail-row"><dt>Type de prise</dt><dd>T2 (Type 2)</dd></div>
+        <div class="detail-row"><dt>Puissance nominale</dt><dd>22 kW</dd></div>
+        <div class="detail-row"><dt>Puissance max</dt><dd>22 kW</dd></div>
+        <div class="detail-row"><dt>Date de mise en service</dt><dd>Juin 2021</dd></div>
+        <div class="detail-row"><dt>Accès recharge</dt><dd><span class="tag tag-green">Accès libre</span></dd></div>
+        <div class="detail-row"><dt>Condition accès</dt><dd>—</dd></div>
+        <div class="detail-row"><dt>Horaires</dt><dd>24h/24 – 7j/7</dd></div>
+      </dl>
+    </div>
+ 
+    <div class="card">
+      <div class="card-title">📍 Localisation</div>
+      <dl class="detail-grid">
+        <div class="detail-row"><dt>Adresse station</dt><dd>12 Allée du Parc, 35000 Rennes</dd></div>
+        <div class="detail-row"><dt>Commune</dt><dd>Rennes</dd></div>
+        <div class="detail-row"><dt>Code INSEE</dt><dd>35238</dd></div>
+        <div class="detail-row"><dt>Département</dt><dd>35 – Ille-et-Vilaine</dd></div>
+        <div class="detail-row"><dt>Latitude</dt><dd>48.11726</dd></div>
+        <div class="detail-row"><dt>Longitude</dt><dd>-1.67792</dd></div>
+      </dl>
+    </div>
+  </main>
+ 
+  <footer>
+    <span>Votre Nom</span> — Groupe CIR2 — 2026
+  </footer>
+</div>
+ 
+<script>
+  function showPage(name) {
+    document.querySelectorAll('.page-wrapper').forEach(p => p.classList.remove('visible'));
+    document.querySelectorAll('.demo-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('visible');
+    document.querySelectorAll('.demo-btn').forEach(b => {
+      if (b.textContent.toLowerCase().includes(name === 'accueil' ? 'accueil' : name === 'liste' ? 'liste' : name === 'creation' ? 'création' : name === 'modification' ? 'modification' : 'détail')) {
+        b.classList.add('active');
+      }
+    });
+    // fallback active on click
+    event.target.classList.add('active');
+  }
+</script>
+</body>
+</html>

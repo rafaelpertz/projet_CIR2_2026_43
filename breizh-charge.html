@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BreizhOhm – Points de recharge en Bretagne</title>
+<link rel="stylesheet" href="assets/breizh-charge.css">
+<script src="assets/script.js" defer></script>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav>
+  <div class="logo" onclick="showPage('home')">
+    <div class="logo-icon">
+      <img id="a" src="assets/logo_breizh_charge_groupe43_v2 (1).png">
+    </div>
+    <div class="logo-text">
+      <h2>Breizh<br>Ohm</h2>
+      <p>Points de recharge électrique en Bretagne</p>
+    </div>
+  </div>
+  <ul>
+    <li><a href="#" onclick="showPage('home')">Accueil</a></li>
+    <li><a href="#" onclick="showPage('search')">Trouver une borne</a></li>
+    <li><a href="#">À propos</a></li>
+  </ul>
+  <button class="nav-cta" onclick="showPage('search')">TROUVEZ VOTRE BORNE</button>
+</nav>
+
+<!-- ========== HOME PAGE ========== -->
+<div id="page-home" class="page active">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="hero-badge">IRVE · CIR2 · 2026</div>
+      <h1>Chargez votre véhicule électrique<br>en toute <span>simplicité</span></h1>
+      <p class="hero-desc">Grâce à BreizhOhm, trouvez la borne de recharge pour votre véhicule électrique ou hybride n'importe où en Bretagne. Vous y retrouverez aussi des informations sur chaque borne (moyen de paiement, horaires, type de prise etc…)</p>
+      <button class="btn-primary" onclick="showPage('search')">TROUVEZ VOTRE BORNE</button>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="stats-section">
+    <h2>BreizhCharge, <span>en chiffres</span></h2>
+    <p class="stats-sub">Données issues du fichier IRVE Bretagne</p>
+
+    <div class="stats-cards">
+      <div class="stat-card">
+        <div class="num">4 097</div>
+        <div class="label">Enregistrements en base</div>
+      </div>
+      <div class="stat-card">
+        <div class="num">24 443</div>
+        <div class="label">Points de charge totaux</div>
+      </div>
+      <div class="stat-card dark">
+        <div class="num">95</div>
+        <div class="label">Aménageurs distincts</div>
+      </div>
+      <div class="stat-card dark">
+        <div class="num">4</div>
+        <div class="label">Départements couverts</div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <!-- Installations par année -->
+      <div>
+        <p class="chart-title">Installations par année</p>
+        <div id="year-chart"></div>
+      </div>
+      <!-- Répartition par département -->
+      <div>
+        <p class="chart-title">Répartition par département</p>
+        <div id="dept-chart"></div>
+      </div>
+    </div>
+
+    <!-- Types de prise -->
+    <p class="chart-title">Types de prise</p>
+    <div class="connectors">
+      <div class="connector-card">
+        <div class="cn">1 089</div>
+        <div class="ct">Type EF</div>
+        <div class="cp">18.1%</div>
+      </div>
+      <div class="connector-card red">
+        <div class="cn">2 197</div>
+        <div class="ct">Type 2</div>
+        <div class="cp">36.6%</div>
+      </div>
+      <div class="connector-card red">
+        <div class="cn">1 798</div>
+        <div class="ct">Combo CCS</div>
+        <div class="cp">32.5%</div>
+      </div>
+      <div class="connector-card">
+        <div class="cn">304</div>
+        <div class="ct">CHAdeMO</div>
+        <div class="cp">5.5%</div>
+      </div>
+      <div class="connector-card">
+        <div class="cn">4</div>
+        <div class="ct">Autre</div>
+        <div class="cp">0.1%</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIMPLE D'UTILISATION -->
+  
+
+  <footer>
+    <p>© 2026 <span>BreizhOhm</span> — Groupe 43 · IRVE · CIR2 · Données issues du fichier IRVE Bretagne</p>
+  </footer>
+</div>
+
+<!-- ========== SEARCH PAGE ========== -->
+<div id="page-search" class="page">
+
+  <!-- HERO -->
+  <div class="search-hero">
+    <div class="search-hero-content">
+      <h1>Choisissez votre borne de recharge de A à Z</h1>
+      <p>Grâce à un large panel d'options vous pouvez tout savoir sur chaque borne de recharge afin que vous puissiez choisir celle qui vous convient le mieux à vous et à votre véhicule.</p>
+    </div>
+  </div>
+
+  <!-- CRITERIA -->
+  <section class="criteria-section">
+    <div class="criteria-header">
+      <h2>Sélectionnez vos critères :</h2>
+      <div class="logo">
+        <div class="logo-icon">
+          <img id="b" src="assets/logo_breizh_charge_groupe43_v2 (1).png">
+        </div>
+        <div class="logo-text">
+          <h2 style="font-size:1rem">Breizh<br>Charge</h2>
+          <p>Points de recharge électrique en Bretagne</p>
+        </div>
+      </div>
+    </div>
+
+    <table class="criteria-table">
+      <thead>
+        <tr>
+          <th>Département</th>
+          <th>Moyen de paiement</th>
+          <th>Type de prise</th>
+          <th>Aménageur</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><ul>
+            <li onclick="toggleFilter(this)">Finistère</li>
+            <li onclick="toggleFilter(this)">Morbihan</li>
+            <li onclick="toggleFilter(this)">Côtes-d'Armor</li>
+            <li onclick="toggleFilter(this)">Ille-et-Vilaine</li>
+          </ul></td>
+          <td><ul>
+            <li onclick="toggleFilter(this)">CB</li>
+            <li onclick="toggleFilter(this)">Espèces</li>
+          </ul></td>
+          <td><ul>
+            <li onclick="toggleFilter(this)">Type EF</li>
+            <li onclick="toggleFilter(this)">Type 2</li>
+            <li onclick="toggleFilter(this)">Combo CCS</li>
+            <li onclick="toggleFilter(this)">CHAdeMO</li>
+            <li onclick="toggleFilter(this)">Autres</li>
+          </ul></td>
+          <td><ul>
+            <li onclick="toggleFilter(this)">Le Roux Loisir</li>
+            <li onclick="toggleFilter(this)">R3</li>
+            <li onclick="toggleFilter(this)">mbc</li>
+            <li onclick="toggleFilter(this)">Allego</li>
+            <li onclick="toggleFilter(this)">Autres</li>
+          </ul></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <button class="validate-btn" onclick="validateSearch()">VALIDEZ VOTRE RECHERCHE</button>
+  </section>
+
+  <!-- MAP -->
+  <section class="map-section" id="map-section">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;">
+      <div class="map-header">
+        <h2>Sélectionnez votre borne :</h2>
+        <p>Choisissez vous même votre borne d'après les critères que vous venez de valider</p>
+        <p style="margin-top:12px;font-size:0.85rem;color:#aaa;">Nombre de résultats lié à votre requête :</p>
+        <div class="result-count" id="result-count">564</div>
+      </div>
+      <div></div>
+    </div>
+    <div class="map-container" id="map-container">
+      <!-- Bretagne SVG Map -->
+      
+    </div>
+  </section>
+
+  <!-- STATION DETAIL -->
+  <section class="detail-section" id="detail-section">
+    <div class="detail-card">
+      <div class="detail-info">
+        <h2 id="detail-name">Borne "ISEN Brest"</h2>
+        <div class="detail-row"><div class="dr-label">En service depuis</div><div class="dr-val" id="detail-date"></div></div>
+        <div class="detail-row"><div class="dr-label">Adresse</div><div class="dr-val" id="detail-addr"></div></div>
+        <div class="detail-row"><div class="dr-label">Puissance de la prise</div><div class="dr-val" id="detail-power"></div></div>
+        <div class="detail-row"><div class="dr-label">Nombre de prises disponibles</div><div class="dr-val" id="detail-slots"></div></div>
+        <div class="detail-row"><div class="dr-label">Lien de la borne</div><div class="dr-val"><a class="detail-link" id="detail-link" href="#" target="_blank"></a></div></div>
+      </div>
+      <div class="detail-map" id="detail-map-container">
+        <svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg" id="detail-map-svg">
+          <rect width="400" height="260" fill="#1a3a5c"/>
+          <path class="brittany-path" d="M40,80 Q70,50 120,60 Q180,45 240,55 Q300,48 360,65 Q390,75 385,105 Q380,130 360,145 Q320,165 270,158 Q230,168 190,160 Q150,170 115,158 Q80,165 55,145 Q28,132 40,80Z" style="fill:#2a6496;stroke:#3a7ab0;stroke-width:0.8"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2026 <span>BreizhOhm</span> — Groupe 43 · IRVE · CIR2 · Données issues du fichier IRVE Bretagne</p>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Modification – IRVE CIR2 2026</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ===== DÉMO NAV ===== -->
+<div id="demo-nav">
+  <span>📐 SQUELETTE BACK-END</span>
+  <button class="demo-btn" onclick="showPage('accueil')">🏠 /back/ Accueil</button>
+  <button class="demo-btn" onclick="showPage('liste')">📋 /back/liste Liste</button>
+  <button class="demo-btn" onclick="showPage('creation')">➕ /back/create Création</button>
+  <button class="demo-btn active" onclick="showPage('modification')">✏️ /back/edit/{id} Modification</button>
+  <button class="demo-btn" onclick="showPage('detail')">🔍 /back/detail/{id} Détail</button>
+</div>
+
+<!-- ===================================================== -->
+<!--  PAGE 4 : MODIFICATION /back/edit/{id}                -->
+<!-- ===================================================== -->
+<div class="page-wrapper visible" id="page-modification">
+  <header>
+    <div class="header-left">
+      <div class="logo">IRVE</div>
+      <div class="site-title">Admin<span>IRVE</span></div>
+      <span class="badge-back">BACK-END</span>
+    </div>
+    <nav>
+      <a onclick="showPage('accueil')">🏠 Accueil</a>
+      <a onclick="showPage('liste')">📋 Liste</a>
+      <a onclick="showPage('creation')">➕ Ajouter</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="url-bar">http://projet-cir2-XX <span class="url-path">/ back / edit / 781</span></div>
+
+    <div class="page-header">
+      <h1><span class="icon">✏️</span>Modifier l'installation #781</h1>
+      <div class="breadcrumb">Back-end &rsaquo; Liste &rsaquo; <span>Modification</span></div>
+    </div>
+
+    <div class="alert alert-warning">
+      ⚠️ Vous modifiez l'installation <strong>#781 – LE ROUX LOISIRS</strong>. Les champs marqués <span style="color:#e74c3c">*</span> sont obligatoires.
+    </div>
+
+    <form>
+      <div class="card">
+        <div class="card-title">🏢 Informations aménageur</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nom aménageur <span class="required">*</span></label>
+            <input type="text" value="LE ROUX LOISIRS" />
+          </div>
+          <div class="form-group">
+            <label>Siren aménageur <span class="required">*</span></label>
+            <input type="text" value="453386120" />
+          </div>
+          <div class="form-group">
+            <label>Contact aménageur</label>
+            <input type="email" value="tech@domainedependruc.com" />
+          </div>
+          <div class="form-group">
+            <label>Nom opérateur <span class="required">*</span></label>
+            <input type="text" value="freshmile" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚡ Caractéristiques</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nombre de PDC <span class="required">*</span></label>
+            <input type="number" value="3" />
+          </div>
+          <div class="form-group">
+            <label>Type de prise <span class="required">*</span></label>
+            <select>
+              <option selected>T2 (Type 2)</option>
+              <option>T3 (CCS Combo)</option>
+              <option>CHAdeMO</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Puissance nominale (kW)</label>
+            <input type="number" value="22" />
+          </div>
+          <div class="form-group">
+            <label>Date de mise en service</label>
+            <input type="date" value="2021-06-15" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📍 Localisation</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Commune</label>
+            <input type="text" value="Rennes" />
+          </div>
+          <div class="form-group">
+            <label>Département</label>
+            <select><option selected>35 – Ille-et-Vilaine</option></select>
+          </div>
+          <div class="form-group">
+            <label>Latitude</label>
+            <input type="number" value="48.11726" />
+          </div>
+          <div class="form-group">
+            <label>Longitude</label>
+            <input type="number" value="-1.67792" />
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:space-between;">
+        <button type="button" class="btn btn-danger">🗑 Supprimer cette installation</button>
+        <div style="display:flex;gap:10px;">
+          <button type="button" class="btn btn-secondary" onclick="showPage('detail')">✖ Annuler</button>
+          <button type="submit" class="btn btn-primary">💾 Enregistrer les modifications</button>
+        </div>
+      </div>
+    </form>
+  </main>
+
+  <footer>
+    <span>Florian Muller & Rafaël Touzé</span> — Groupe 13, CIR2 — 2026
+  </footer>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

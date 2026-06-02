@@ -1,121 +1,516 @@
-// ===== NAVIGATION =====
-let bretagneMap = null;
+/**
+ * script.js — BreizhOhm Front-End
+ * Groupe 43 · CIR2 · ISEN Ouest · 2026
+ *
+ * Responsabilités :
+ *  - Navigation entre les pages (SPA)
+ *  - Peuplement des <select> via appels API REST (AJAX/JSON)
+ *  - Fonctionnalité 3 : recherche + affichage tableau résultats
+ *  - Fonctionnalité 4 : affichage détail d'une installation
+ *  - Fonctionnalité 5 : carte Leaflet avec marqueurs
+ *  - Graphiques de la page d'accueil
+ */
 
+/* ============================================================
+   CONFIGURATION API
+   ============================================================ */
+const API_BASE = '/api'; // Racine de l'API PHP REST
+
+/* ============================================================
+   NAVIGATION ENTRE PAGES
+   ============================================================ */
+let carteLeaflet = null;      // Instance Leaflet (page carte)
+let detailMapLeaflet = null;  // Instance Leaflet (page détail)
+
+/**
+ * Affiche la page demandée et cache les autres.
+ * @param {string} name - Identifiant de la page (home, search, detail, carte)
+ */
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  window.scrollTo(0, 0);
+  const target = document.getElementById('page-' + name);
+  if (target) {
+    target.classList.add('active');
+    window.scrollTo(0, 0);
+  }
 
-  if (name === 'search') {
-    if (!bretagneMap) {
-      bretagneMap = L.map('map-container').setView([48.15, -2.9], 8);
-      L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        {
-          attribution: 'Tiles &copy; Esri &mdash; Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, GIS User Community',
-          maxZoom: 18
-        }
-      ).addTo(bretagneMap);
-    } else {
-      bretagneMap.invalidateSize();
-    }
+  // Initialiser la carte Leaflet au premier affichage
+  if (name === 'carte' && !carteLeaflet) {
+    initCarteLeaflet();
   }
 }
 
-// ===== BUILD YEAR CHART =====
+/* ============================================================
+   INITIALISATION AU CHARGEMENT DE LA PAGE
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  buildYearChart();
+  buildDeptChart();
+  buildCrossTable();
+  chargerFiltresRecherche();
+});
+
+/* ============================================================
+   GRAPHIQUES DE LA PAGE D'ACCUEIL
+   ============================================================ */
+
+/** Données statiques des installations par année (issues du CSV IRVE) */
 const yearData = [
   {y:'2014',v:4},{y:'2015',v:13},{y:'2016',v:273},{y:'2017',v:279},
   {y:'2018',v:36},{y:'2019',v:56},{y:'2020',v:25},{y:'2021',v:107},
   {y:'2022',v:388},{y:'2023',v:945},{y:'2024',v:623},{y:'2025',v:545},{y:'2026',v:21}
 ];
-const maxYear = Math.max(...yearData.map(d=>d.v));
-const yearContainer = document.getElementById('year-chart');
-yearData.forEach(d => {
-  const row = document.createElement('div');
-  row.className = 'bar-row';
-  row.innerHTML = `
-    <span class="bar-label">${d.y}</span>
-    <div class="bar-track"><div class="bar-fill" style="width:${(d.v/maxYear)*100}%"></div></div>
-    <span class="bar-val">${d.v}</span>
-  `;
-  yearContainer.appendChild(row);
-});
 
-// ===== BUILD DEPT CHART =====
+/** Données statiques par département */
 const deptData = [
   {label:'35 – Ille-et-Vilaine', v:1437},
-  {label:'56 – Morbihan', v:1318},
-  {label:'29 – Finistère', v:698},
-  {label:'22 – Côtes-d\'Armor', v:644},
+  {label:'56 – Morbihan',        v:1318},
+  {label:'29 – Finistère',       v:698},
+  {label:'22 – Côtes-d\'Armor',  v:644},
 ];
-const maxDept = Math.max(...deptData.map(d=>d.v));
-const deptContainer = document.getElementById('dept-chart');
-deptData.forEach(d => {
-  const row = document.createElement('div');
-  row.className = 'bar-row';
-  row.innerHTML = `
-    <span class="bar-label-long">${d.label}</span>
-    <div class="bar-track"><div class="bar-fill" style="width:${(d.v/maxDept)*100}%"></div></div>
-    <span class="bar-val">${d.v}</span>
-  `;
-  deptContainer.appendChild(row);
-});
 
-// ===== FILTER SELECTION =====
-function toggleFilter(el) {
-  el.classList.toggle('selected');
-  updateCount();
-}
+/** Données croisées année × département (extrait représentatif) */
+const crossData = [
+  {annee:'2016', d29:80, d22:60, d56:72, d35:61},
+  {annee:'2017', d29:75, d22:58, d56:80, d35:66},
+  {annee:'2018', d29:8,  d22:6,  d56:10, d35:12},
+  {annee:'2019', d29:12, d22:9,  d56:14, d35:21},
+  {annee:'2020', d29:5,  d22:4,  d56:6,  d35:10},
+  {annee:'2021', d29:22, d22:18, d56:28, d35:39},
+  {annee:'2022', d29:88, d22:72, d56:95, d35:133},
+  {annee:'2023', d29:210,d22:165,d56:215,d35:355},
+  {annee:'2024', d29:138,d22:110,d56:142,d35:233},
+  {annee:'2025', d29:120,d22:96, d56:125,d35:204},
+];
 
-function updateCount() {
-  const selected = document.querySelectorAll('.criteria-table li.selected').length;
-  const base = 564;
-  const newCount = Math.max(12, base - selected * Math.floor(Math.random()*80 + 30));
-  document.getElementById('result-count').textContent = newCount.toLocaleString('fr-FR');
-}
-
-function validateSearch() {
-  document.getElementById('map-section').scrollIntoView({behavior:'smooth'});
-  updateCount();
-}
-
-// ===== STATION DETAIL =====
-function showStation(name, addr, date, power, slots, link, mx, my) {
-  document.getElementById('detail-name').textContent = 'Borne "' + name + '"';
-  document.getElementById('detail-date').textContent = date;
-  document.getElementById('detail-addr').textContent = addr;
-  document.getElementById('detail-power').textContent = power;
-  document.getElementById('detail-slots').textContent = slots;
-  const linkEl = document.getElementById('detail-link');
-  linkEl.textContent = link;
-  linkEl.href = link.startsWith('http') ? link : '#';
-
-  // Update detail map with a pin
-  const svg = document.getElementById('detail-map-svg');
-  // Remove old pins
-  svg.querySelectorAll('.dpin').forEach(e => e.remove());
-  // Scale mx,my from main map coords (800x450) to detail map (400x260)
-  const dx = (mx / 800) * 400;
-  const dy = (my / 450) * 260;
-  const pin = document.createElementNS('http://www.w3.org/2000/svg','g');
-  pin.setAttribute('class','dpin');
-  pin.innerHTML = `
-    <circle cx="${dx}" cy="${dy}" r="8" fill="#e63946" stroke="#fff" stroke-width="2"/>
-    <circle cx="${dx}" cy="${dy-9}" r="2.5" fill="#fff"/>
-    <line x1="${dx}" y1="${dy-6}" x2="${dx}" y2="${dy+8}" stroke="#fff" stroke-width="1.5"/>
-  `;
-  svg.appendChild(pin);
-
-  const detail = document.getElementById('detail-section');
-  detail.classList.add('visible');
-  setTimeout(() => detail.scrollIntoView({behavior:'smooth'}), 50);
-}
-
-// Animate bars on load
-setTimeout(() => {
-  document.querySelectorAll('.bar-fill').forEach(b => {
-    const w = b.style.width;
-    b.style.width = '0';
-    setTimeout(() => b.style.width = w, 100);
+/**
+ * Construit le graphique en barres "installations par année".
+ */
+function buildYearChart() {
+  const container = document.getElementById('year-chart');
+  if (!container) return;
+  const maxVal = Math.max(...yearData.map(d => d.v));
+  yearData.forEach(d => {
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `
+      <span class="bar-label">${d.y}</span>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:0%" data-w="${(d.v / maxVal) * 100}%"></div>
+      </div>
+      <span class="bar-val">${d.v}</span>`;
+    container.appendChild(row);
   });
-}, 200);
+  // Animation d'entrée
+  setTimeout(() => {
+    container.querySelectorAll('.bar-fill').forEach(b => {
+      b.style.width = b.dataset.w;
+    });
+  }, 200);
+}
+
+/**
+ * Construit le graphique en barres "répartition par département".
+ */
+function buildDeptChart() {
+  const container = document.getElementById('dept-chart');
+  if (!container) return;
+  const maxVal = Math.max(...deptData.map(d => d.v));
+  deptData.forEach(d => {
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `
+      <span class="bar-label-long">${d.label}</span>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:0%" data-w="${(d.v / maxVal) * 100}%"></div>
+      </div>
+      <span class="bar-val">${d.v}</span>`;
+    container.appendChild(row);
+  });
+  setTimeout(() => {
+    container.querySelectorAll('.bar-fill').forEach(b => {
+      b.style.width = b.dataset.w;
+    });
+  }, 300);
+}
+
+/**
+ * Remplit le tableau croisé année × département.
+ */
+function buildCrossTable() {
+  const tbody = document.querySelector('#cross-table tbody');
+  if (!tbody) return;
+  crossData.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.annee}</td>
+      <td>${row.d29}</td>
+      <td>${row.d22}</td>
+      <td>${row.d56}</td>
+      <td>${row.d35}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ============================================================
+   FONCTIONNALITÉ 2 — PEUPLEMENT DES <SELECT> VIA API
+   ============================================================ */
+
+/**
+ * Charge les options des selects du formulaire de recherche via l'API REST.
+ * Routes attendues :
+ *   GET /api/amenageurs?limit=20&random=1   → [{id, nom_amenageur}, ...]
+ *   GET /api/types-prise                    → [{id, libelle}, ...]
+ *   GET /api/departements                   → [{code, nom}, ...]
+ */
+async function chargerFiltresRecherche() {
+  await chargerSelect('sel-amenageur', `${API_BASE}/amenageurs?limit=20&random=1`, 'nom_amenageur', 'id');
+  await chargerSelect('sel-prise',     `${API_BASE}/types-prise`,                  'libelle',        'id');
+  await chargerSelect('sel-dept',      `${API_BASE}/departements`,                 'nom',            'code');
+}
+
+/**
+ * Remplit un élément <select> avec les données retournées par une URL d'API.
+ * @param {string} selectId   - ID du <select> à remplir
+ * @param {string} url        - URL de l'API
+ * @param {string} labelKey   - Clé JSON pour le texte de l'option
+ * @param {string} valueKey   - Clé JSON pour la valeur de l'option
+ */
+async function chargerSelect(selectId, url, labelKey, valueKey) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+
+  try {
+    const reponse = await fetch(url);
+    if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+    const donnees = await reponse.json();
+
+    donnees.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item[valueKey] ?? '';
+      opt.textContent = item[labelKey] ?? '—';
+      sel.appendChild(opt);
+    });
+  } catch (err) {
+    // Données de secours si l'API n'est pas encore disponible
+    console.warn(`API non disponible (${url}) — données de secours chargées.`, err);
+    chargerSelectSecours(selectId);
+  }
+}
+
+/**
+ * Données de secours pour les selects si l'API n'est pas encore disponible.
+ * @param {string} selectId
+ */
+function chargerSelectSecours(selectId) {
+  const secours = {
+    'sel-amenageur': [
+      'LE ROUX LOISIRS','R3','ELECTRIC 55 CHARGING','SARL Thouzeau LM',
+      'Freshmile','Allego','Izivia','TotalEnergies','Leclerc Energie',
+      'E.Leclerc','Lidl France','Auchan Retail','Tesla Motors',
+      'Engie','EDF','CLETIS','Bouygues Energies','DRIVECO',
+      'Elyvia','ChargeGuru'
+    ].map((n, i) => ({ value: String(i+1), label: n })),
+    'sel-prise': [
+      {value:'EF', label:'Type EF (domestique)'},
+      {value:'T2', label:'Type 2'},
+      {value:'CCS',label:'Combo CCS'},
+      {value:'CHD',label:'CHAdeMO'},
+      {value:'AUT',label:'Autre'},
+    ],
+    'sel-dept': [
+      {value:'29', label:'29 – Finistère'},
+      {value:'22', label:'22 – Côtes-d\'Armor'},
+      {value:'56', label:'56 – Morbihan'},
+      {value:'35', label:'35 – Ille-et-Vilaine'},
+    ],
+  };
+
+  const sel = document.getElementById(selectId);
+  if (!sel || !secours[selectId]) return;
+  secours[selectId].forEach(item => {
+    const opt = document.createElement('option');
+    opt.value = item.value;
+    opt.textContent = item.label;
+    sel.appendChild(opt);
+  });
+}
+
+/* ============================================================
+   FONCTIONNALITÉ 3 — TABLEAU DE RÉSULTATS (sans changer de page)
+   ============================================================ */
+
+/**
+ * Déclenche la recherche en appelant l'API REST avec les filtres sélectionnés.
+ * Affiche le tableau de résultats sous le formulaire sans changer de page.
+ * Route : GET /api/installations?amenageur=&prise=&dept=
+ */
+async function lancerRecherche() {
+  const amenageur = document.getElementById('sel-amenageur').value;
+  const prise     = document.getElementById('sel-prise').value;
+  const dept      = document.getElementById('sel-dept').value;
+
+  const params = new URLSearchParams();
+  if (amenageur) params.append('amenageur', amenageur);
+  if (prise)     params.append('prise', prise);
+  if (dept)      params.append('dept', dept);
+
+  const url = `${API_BASE}/installations?${params.toString()}`;
+
+  try {
+    const reponse = await fetch(url);
+    if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+    const donnees = await reponse.json();
+    afficherTableauResultats(donnees);
+  } catch (err) {
+    console.warn('API non disponible — données de démonstration affichées.', err);
+    afficherTableauResultats(donneesDemo());
+  }
+}
+
+/**
+ * Remplit et affiche le tableau de résultats.
+ * Colonnes : Date MES, Nb points, Type prise, Puissance, Localisation, Détails
+ * @param {Array} installations - Tableau d'objets retourné par l'API
+ */
+function afficherTableauResultats(installations) {
+  const section = document.getElementById('results-section');
+  const tbody   = document.getElementById('results-tbody');
+  const countEl = document.getElementById('results-count');
+
+  tbody.innerHTML = '';
+  countEl.textContent = `${installations.length} résultat(s)`;
+
+  installations.forEach(inst => {
+    // Formatage date : mois et année seulement
+    const dateMES = formatDateMoisAnnee(inst.date_mise_en_service);
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${dateMES}</td>
+      <td>${inst.nbre_pdc ?? '—'}</td>
+      <td>${inst.type_prise ?? '—'}</td>
+      <td>${inst.puissance_nominale ? inst.puissance_nominale + ' kW' : '—'}</td>
+      <td>${inst.commune ?? ''} ${inst.code_dept ? '(' + inst.code_dept + ')' : ''}</td>
+      <td>
+        <button class="btn-detail" onclick="afficherDetail(${inst.id ?? 0})">
+          Voir le détail
+        </button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+
+  section.style.display = 'block';
+  section.scrollIntoView({ behavior: 'smooth' });
+}
+
+/**
+ * Formate une date ISO en "mois/année" (ex: "06/2022").
+ * @param {string} dateStr
+ * @returns {string}
+ */
+function formatDateMoisAnnee(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+  return `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+}
+
+/**
+ * Données de démonstration utilisées quand l'API n'est pas disponible.
+ * @returns {Array}
+ */
+function donneesDemo() {
+  return [
+    {id:781,  date_mise_en_service:'2021-06-15', nbre_pdc:3,  type_prise:'Type 2',    puissance_nominale:22,   commune:'Rennes',   code_dept:'35'},
+    {id:867,  date_mise_en_service:'2020-03-10', nbre_pdc:7,  type_prise:'Combo CCS', puissance_nominale:50,   commune:'Brest',    code_dept:'29'},
+    {id:1344, date_mise_en_service:'2022-11-01', nbre_pdc:1,  type_prise:'Type 2',    puissance_nominale:7.4,  commune:'Vannes',   code_dept:'56'},
+    {id:2026, date_mise_en_service:'2023-05-20', nbre_pdc:4,  type_prise:'Type EF',   puissance_nominale:3.7,  commune:'Lorient',  code_dept:'56'},
+    {id:2027, date_mise_en_service:'2024-01-12', nbre_pdc:2,  type_prise:'CHAdeMO',   puissance_nominale:50,   commune:'Quimper',  code_dept:'29'},
+    {id:1233, date_mise_en_service:'2019-08-05', nbre_pdc:5,  type_prise:'Type 2',    puissance_nominale:22,   commune:'Saint-Brieuc', code_dept:'22'},
+  ];
+}
+
+/* ============================================================
+   FONCTIONNALITÉ 4 — DÉTAIL D'UNE INSTALLATION
+   ============================================================ */
+
+/**
+ * Récupère les détails d'une installation via l'API et affiche la page détail.
+ * Route : GET /api/installations/{id}
+ * @param {number} id - Identifiant de l'installation
+ */
+async function afficherDetail(id) {
+  try {
+    const reponse = await fetch(`${API_BASE}/installations/${id}`);
+    if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+    const inst = await reponse.json();
+    remplirPageDetail(inst);
+  } catch (err) {
+    console.warn('API non disponible — données de démonstration.', err);
+    // Cherche dans les données de démo
+    const demo = donneesDemo().find(d => d.id === id) || donneesDemo()[0];
+    remplirPageDetail({
+      ...demo,
+      nom_amenageur: 'LE ROUX LOISIRS',
+      nom_operateur: 'freshmile',
+      nom_enseigne:  'reseau A',
+      id_station:    'FR*LRL*P000' + id,
+      acces_recharge:'Accès libre',
+      horaires:      '24h/24 – 7j/7',
+      adresse_station:'12 Allée du Parc, 35000 Rennes',
+      coordonneesXY_lat: 48.11726,
+      coordonneesXY_lon: -1.67792,
+    });
+  }
+  showPage('detail');
+}
+
+/**
+ * Remplit la page détail avec les données d'une installation.
+ * @param {Object} inst
+ */
+function remplirPageDetail(inst) {
+  document.getElementById('dp-title').textContent =
+    `Détail — ${inst.nom_enseigne || inst.nom_amenageur || 'Installation #' + inst.id}`;
+
+  setText('dp-amenageur',   inst.nom_amenageur);
+  setText('dp-operateur',   inst.nom_operateur);
+  setText('dp-enseigne',    inst.nom_enseigne);
+  setText('dp-id-station',  inst.id_station);
+  setText('dp-date',        formatDateMoisAnnee(inst.date_mise_en_service));
+  setText('dp-pdc',         inst.nbre_pdc);
+  setText('dp-prise',       inst.type_prise);
+  setText('dp-puissance',   inst.puissance_nominale ? inst.puissance_nominale + ' kW' : '—');
+  setText('dp-acces',       inst.acces_recharge);
+  setText('dp-horaires',    inst.horaires);
+  setText('dp-adresse',     inst.adresse_station);
+  setText('dp-commune',     inst.commune);
+  setText('dp-dept',        inst.code_dept ? inst.code_dept + ' – ' + (inst.nom_dept || '') : '—');
+  setText('dp-coords',      inst.coordonneesXY_lat ? `${inst.coordonneesXY_lat}, ${inst.coordonneesXY_lon}` : '—');
+
+  // Mini-carte Leaflet pour positionner la borne
+  const lat = parseFloat(inst.coordonneesXY_lat);
+  const lon = parseFloat(inst.coordonneesXY_lon);
+  if (!isNaN(lat) && !isNaN(lon)) {
+    setTimeout(() => initDetailMap(lat, lon, inst.nom_enseigne || inst.nom_amenageur || ''), 100);
+  }
+}
+
+/** Utilitaire : remplit le textContent d'un élément */
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val ?? '—';
+}
+
+/** Initialise la mini-carte Leaflet sur la page détail. */
+function initDetailMap(lat, lon, titre) {
+  const container = document.getElementById('dp-map-container');
+  if (!container) return;
+
+  if (detailMapLeaflet) {
+    detailMapLeaflet.remove();
+    detailMapLeaflet = null;
+  }
+
+  detailMapLeaflet = L.map('dp-map-container').setView([lat, lon], 15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(detailMapLeaflet);
+  L.marker([lat, lon]).addTo(detailMapLeaflet).bindPopup(titre).openPopup();
+}
+
+/* ============================================================
+   FONCTIONNALITÉ 5 — CARTE OPENSTREETMAP / LEAFLET
+   ============================================================ */
+
+/** Initialise la carte Leaflet centrée sur la Bretagne. */
+function initCarteLeaflet() {
+  const container = document.getElementById('carte-leaflet-container');
+  if (!container) return;
+
+  carteLeaflet = L.map('carte-leaflet-container').setView([48.15, -2.9], 8);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 18
+  }).addTo(carteLeaflet);
+}
+
+/**
+ * Charge et affiche les bornes filtrées sur la carte Leaflet.
+ * Route : GET /api/installations/carte?annee=&dept=
+ */
+async function afficherCarte() {
+  if (!carteLeaflet) initCarteLeaflet();
+
+  const annee = document.getElementById('carte-annee').value;
+  const dept  = document.getElementById('carte-dept').value;
+
+  const params = new URLSearchParams();
+  if (annee) params.append('annee', annee);
+  if (dept)  params.append('dept', dept);
+
+  try {
+    const reponse = await fetch(`${API_BASE}/installations/carte?${params.toString()}`);
+    if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+    const points = await reponse.json();
+    afficherMarqueurs(points);
+  } catch (err) {
+    console.warn('API non disponible — données de démonstration sur la carte.', err);
+    afficherMarqueurs(pointsCarteDemo());
+  }
+}
+
+/**
+ * Ajoute les marqueurs sur la carte Leaflet.
+ * Chaque marqueur comporte un popup (localité, puissance) et un lien vers le détail.
+ * @param {Array} points
+ */
+function afficherMarqueurs(points) {
+  // Supprimer les marqueurs précédents
+  if (carteLeaflet._layers) {
+    carteLeaflet.eachLayer(layer => {
+      if (layer instanceof L.Marker) carteLeaflet.removeLayer(layer);
+    });
+  }
+
+  document.getElementById('carte-count').textContent = points.length;
+
+  points.forEach(pt => {
+    const lat = parseFloat(pt.lat);
+    const lon = parseFloat(pt.lon);
+    if (isNaN(lat) || isNaN(lon)) return;
+
+    // Popup : localité, puissance et lien vers détail
+    const popupHtml = `
+      <div style="font-family:sans-serif;min-width:160px;">
+        <strong>${pt.commune || '—'}</strong><br>
+        Puissance : ${pt.puissance_nominale ? pt.puissance_nominale + ' kW' : '—'}<br>
+        Type : ${pt.type_prise || '—'}<br>
+        <a href="#" onclick="afficherDetail(${pt.id});return false;"
+           style="color:#e63946;font-weight:bold;">Voir le détail →</a>
+      </div>`;
+
+    L.marker([lat, lon]).addTo(carteLeaflet).bindPopup(popupHtml);
+  });
+}
+
+/**
+ * Points de démonstration pour la carte (quand l'API n'est pas disponible).
+ * @returns {Array}
+ */
+function pointsCarteDemo() {
+  return [
+    {id:781,  lat:48.11726, lon:-1.67792, commune:'Rennes',       puissance_nominale:22,  type_prise:'Type 2'},
+    {id:867,  lat:48.38869, lon:-4.48333, commune:'Brest',        puissance_nominale:50,  type_prise:'Combo CCS'},
+    {id:1344, lat:47.65868, lon:-2.75974, commune:'Vannes',       puissance_nominale:7.4, type_prise:'Type 2'},
+    {id:2026, lat:47.74844, lon:-3.36618, commune:'Lorient',      puissance_nominale:3.7, type_prise:'Type EF'},
+    {id:2027, lat:47.99709, lon:-4.09680, commune:'Quimper',      puissance_nominale:50,  type_prise:'CHAdeMO'},
+    {id:1233, lat:48.51417, lon:-2.76603, commune:'Saint-Brieuc', puissance_nominale:22,  type_prise:'Type 2'},
+    {id:1500, lat:48.65352, lon:-1.63694, commune:'Saint-Malo',   puissance_nominale:22,  type_prise:'Type 2'},
+    {id:1600, lat:48.07000, lon:-1.79000, commune:'Bruz',         puissance_nominale:7.4, type_prise:'Type EF'},
+    {id:1700, lat:48.44000, lon:-4.36000, commune:'Landerneau',   puissance_nominale:22,  type_prise:'Type 2'},
+    {id:1800, lat:47.89000, lon:-2.00000, commune:'Redon',        puissance_nominale:50,  type_prise:'Combo CCS'},
+  ];
+}

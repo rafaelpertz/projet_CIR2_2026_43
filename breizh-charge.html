@@ -11,26 +11,31 @@
 </head>
 <body>
 
-<!-- NAVIGATION -->
+<!-- ========================================================= -->
+<!--  EN-TÊTE COMMUN (logo + titre + menu 3 liens)             -->
+<!-- ========================================================= -->
 <nav>
   <div class="logo" onclick="showPage('home')">
     <div class="logo-icon">
-      <img id="a" src="assets/logo_breizh_charge_groupe43_v2 (1).png">
+      <img id="nav-logo" src="assets/logo_breizh_charge_groupe43_v2 (1).png" alt="Logo BreizhOhm">
     </div>
     <div class="logo-text">
       <h2>Breizh<br>Ohm</h2>
       <p>Points de recharge électrique en Bretagne</p>
     </div>
   </div>
+  <!-- Menu avec 3 liens : Accueil, Recherche, Carte -->
   <ul>
     <li><a href="#" onclick="showPage('home')">Accueil</a></li>
-    <li><a href="#" onclick="showPage('search')">Trouver une borne</a></li>
-    <li><a href="#">À propos</a></li>
+    <li><a href="#" onclick="showPage('search')">Recherche</a></li>
+    <li><a href="#" onclick="showPage('carte')">Carte</a></li>
   </ul>
-  <button class="nav-cta" onclick="showPage('search')">TROUVEZ VOTRE BORNE</button>
+  <button class="nav-cta" onclick="showPage('search')">TROUVER UNE BORNE</button>
 </nav>
 
-<!-- ========== HOME PAGE ========== -->
+<!-- ========================================================= -->
+<!--  PAGE 1 : ACCUEIL                                         -->
+<!-- ========================================================= -->
 <div id="page-home" class="page active">
 
   <!-- HERO -->
@@ -39,195 +44,334 @@
     <div class="hero-content">
       <div class="hero-badge">IRVE · CIR2 · 2026</div>
       <h1>Chargez votre véhicule électrique<br>en toute <span>simplicité</span></h1>
-      <p class="hero-desc">Grâce à BreizhOhm, trouvez la borne de recharge pour votre véhicule électrique ou hybride n'importe où en Bretagne. Vous y retrouverez aussi des informations sur chaque borne (moyen de paiement, horaires, type de prise etc…)</p>
-      <button class="btn-primary" onclick="showPage('search')">TROUVEZ VOTRE BORNE</button>
+      <p class="hero-desc">
+        BreizhOhm répertorie l'ensemble des points de recharge pour véhicules électriques
+        en Bretagne. Trouvez la borne la plus adaptée à votre véhicule, consultez ses
+        caractéristiques (type de prise, puissance, horaires) et visualisez-la sur la carte.
+      </p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;">
+        <button class="btn-primary" onclick="showPage('search')">RECHERCHER UNE BORNE</button>
+        <button class="btn-outline" onclick="showPage('carte')">VOIR LA CARTE</button>
+      </div>
     </div>
   </section>
 
-  <!-- STATS -->
+  <!-- STATISTIQUES -->
   <section class="stats-section">
-    <h2>BreizhCharge, <span>en chiffres</span></h2>
+    <h2>BreizhOhm, <span>en chiffres</span></h2>
     <p class="stats-sub">Données issues du fichier IRVE Bretagne</p>
 
+    <!-- KPIs principaux -->
     <div class="stats-cards">
       <div class="stat-card">
-        <div class="num">4 097</div>
+        <div class="num" id="stat-total">4 097</div>
         <div class="label">Enregistrements en base</div>
       </div>
       <div class="stat-card">
-        <div class="num">24 443</div>
+        <div class="num" id="stat-pdc">24 443</div>
         <div class="label">Points de charge totaux</div>
       </div>
       <div class="stat-card dark">
-        <div class="num">95</div>
+        <div class="num" id="stat-amenageurs">95</div>
         <div class="label">Aménageurs distincts</div>
       </div>
       <div class="stat-card dark">
-        <div class="num">4</div>
+        <div class="num" id="stat-depts">4</div>
         <div class="label">Départements couverts</div>
       </div>
     </div>
 
+    <!-- Graphiques : par année & par département -->
     <div class="charts-grid">
-      <!-- Installations par année -->
       <div>
         <p class="chart-title">Installations par année</p>
         <div id="year-chart"></div>
       </div>
-      <!-- Répartition par département -->
       <div>
         <p class="chart-title">Répartition par département</p>
         <div id="dept-chart"></div>
       </div>
     </div>
 
-    <!-- Types de prise -->
-    <p class="chart-title">Types de prise</p>
+    <!-- Graphique croisé année × département -->
+    <p class="chart-title">Installations par année et par département</p>
+    <div class="table-wrapper-stats">
+      <table class="cross-table" id="cross-table">
+        <thead>
+          <tr>
+            <th>Année</th>
+            <th>29 – Finistère</th>
+            <th>22 – Côtes-d'Armor</th>
+            <th>56 – Morbihan</th>
+            <th>35 – Ille-et-Vilaine</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Rempli dynamiquement par script.js -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Types de prise (nbre_pdc) -->
+    <p class="chart-title" style="margin-top:48px;">Types de prise (nbre_pdc)</p>
     <div class="connectors">
       <div class="connector-card">
         <div class="cn">1 089</div>
         <div class="ct">Type EF</div>
-        <div class="cp">18.1%</div>
+        <div class="cp">18.1 %</div>
       </div>
       <div class="connector-card red">
         <div class="cn">2 197</div>
         <div class="ct">Type 2</div>
-        <div class="cp">36.6%</div>
+        <div class="cp">36.6 %</div>
       </div>
       <div class="connector-card red">
         <div class="cn">1 798</div>
         <div class="ct">Combo CCS</div>
-        <div class="cp">32.5%</div>
+        <div class="cp">32.5 %</div>
       </div>
       <div class="connector-card">
         <div class="cn">304</div>
         <div class="ct">CHAdeMO</div>
-        <div class="cp">5.5%</div>
+        <div class="cp">5.5 %</div>
       </div>
       <div class="connector-card">
         <div class="cn">4</div>
         <div class="ct">Autre</div>
-        <div class="cp">0.1%</div>
+        <div class="cp">0.1 %</div>
+      </div>
+    </div>
+
+    <!-- Accès rapides -->
+    <div class="home-ctas">
+      <div class="home-cta-card" onclick="showPage('search')">
+        <div class="home-cta-icon">🔍</div>
+        <h3>Rechercher une borne</h3>
+        <p>Filtrez par aménageur, type de prise ou département.</p>
+      </div>
+      <div class="home-cta-card" onclick="showPage('carte')">
+        <div class="home-cta-icon">🗺️</div>
+        <h3>Visualiser sur la carte</h3>
+        <p>Consultez la répartition géographique des bornes en Bretagne.</p>
       </div>
     </div>
   </section>
 
-  <!-- SIMPLE D'UTILISATION -->
-  
-
+  <!-- PIED DE PAGE -->
   <footer>
-    <p>© 2026 <span>BreizhOhm</span> — Groupe 43 · IRVE · CIR2 · Données issues du fichier IRVE Bretagne</p>
+    <p>© 2026 <span>BreizhOhm</span> — Pereira-Touzé Rafael &amp; Partenaire — Groupe 43 · CIR2 · ISEN Ouest</p>
   </footer>
 </div>
 
-<!-- ========== SEARCH PAGE ========== -->
+<!-- ========================================================= -->
+<!--  PAGE 2 : RECHERCHE (formulaire + tableau résultats)      -->
+<!-- ========================================================= -->
 <div id="page-search" class="page">
 
   <!-- HERO -->
   <div class="search-hero">
     <div class="search-hero-content">
-      <h1>Choisissez votre borne de recharge de A à Z</h1>
-      <p>Grâce à un large panel d'options vous pouvez tout savoir sur chaque borne de recharge afin que vous puissiez choisir celle qui vous convient le mieux à vous et à votre véhicule.</p>
+      <h1>Rechercher une borne de recharge</h1>
+      <p>Filtrez les bornes par aménageur, type de prise ou département pour trouver
+         celle qui vous convient.</p>
     </div>
   </div>
 
-  <!-- CRITERIA -->
+  <!-- FORMULAIRE DE RECHERCHE — Fonctionnalité 2 -->
   <section class="criteria-section">
     <div class="criteria-header">
       <h2>Sélectionnez vos critères :</h2>
       <div class="logo">
         <div class="logo-icon">
-          <img id="b" src="assets/logo_breizh_charge_groupe43_v2 (1).png">
+          <img id="search-logo" src="assets/logo_breizh_charge_groupe43_v2 (1).png" alt="Logo">
         </div>
         <div class="logo-text">
-          <h2 style="font-size:1rem">Breizh<br>Charge</h2>
-          <p>Points de recharge électrique en Bretagne</p>
+          <h2 style="font-size:1rem">Breizh<br>Ohm</h2>
+          <p>Points de recharge en Bretagne</p>
         </div>
       </div>
     </div>
 
-    <table class="criteria-table">
-      <thead>
-        <tr>
-          <th>Département</th>
-          <th>Moyen de paiement</th>
-          <th>Type de prise</th>
-          <th>Aménageur</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><ul>
-            <li onclick="toggleFilter(this)">Finistère</li>
-            <li onclick="toggleFilter(this)">Morbihan</li>
-            <li onclick="toggleFilter(this)">Côtes-d'Armor</li>
-            <li onclick="toggleFilter(this)">Ille-et-Vilaine</li>
-          </ul></td>
-          <td><ul>
-            <li onclick="toggleFilter(this)">CB</li>
-            <li onclick="toggleFilter(this)">Espèces</li>
-          </ul></td>
-          <td><ul>
-            <li onclick="toggleFilter(this)">Type EF</li>
-            <li onclick="toggleFilter(this)">Type 2</li>
-            <li onclick="toggleFilter(this)">Combo CCS</li>
-            <li onclick="toggleFilter(this)">CHAdeMO</li>
-            <li onclick="toggleFilter(this)">Autres</li>
-          </ul></td>
-          <td><ul>
-            <li onclick="toggleFilter(this)">Le Roux Loisir</li>
-            <li onclick="toggleFilter(this)">R3</li>
-            <li onclick="toggleFilter(this)">mbc</li>
-            <li onclick="toggleFilter(this)">Allego</li>
-            <li onclick="toggleFilter(this)">Autres</li>
-          </ul></td>
-        </tr>
-      </tbody>
-    </table>
-
-    <button class="validate-btn" onclick="validateSearch()">VALIDEZ VOTRE RECHERCHE</button>
-  </section>
-
-  <!-- MAP -->
-  <section class="map-section" id="map-section">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;">
-      <div class="map-header">
-        <h2>Sélectionnez votre borne :</h2>
-        <p>Choisissez vous même votre borne d'après les critères que vous venez de valider</p>
-        <p style="margin-top:12px;font-size:0.85rem;color:#aaa;">Nombre de résultats lié à votre requête :</p>
-        <div class="result-count" id="result-count">564</div>
+    <!-- Filtres de type <select> — spec : aménageur (20 items), type de prise, département -->
+    <div class="search-form">
+      <!-- Aménageur : 20 items pris au hasard en base -->
+      <div class="form-field">
+        <label for="sel-amenageur">Aménageur</label>
+        <select id="sel-amenageur">
+          <option value="">— Tous —</option>
+          <!-- Rempli par script.js via API /api/amenageurs?limit=20&random=1 -->
+        </select>
       </div>
-      <div></div>
-    </div>
-    <div class="map-container" id="map-container">
-      <!-- Bretagne SVG Map -->
-      
+
+      <!-- Type de prise -->
+      <div class="form-field">
+        <label for="sel-prise">Type de prise</label>
+        <select id="sel-prise">
+          <option value="">— Tous —</option>
+          <!-- Rempli par script.js via API /api/types-prise -->
+        </select>
+      </div>
+
+      <!-- Département -->
+      <div class="form-field">
+        <label for="sel-dept">Département</label>
+        <select id="sel-dept">
+          <option value="">— Tous —</option>
+          <!-- Rempli par script.js via API /api/departements -->
+        </select>
+      </div>
+
+      <button class="validate-btn" onclick="lancerRecherche()">RECHERCHER</button>
     </div>
   </section>
 
-  <!-- STATION DETAIL -->
-  <section class="detail-section" id="detail-section">
-    <div class="detail-card">
-      <div class="detail-info">
-        <h2 id="detail-name">Borne "ISEN Brest"</h2>
-        <div class="detail-row"><div class="dr-label">En service depuis</div><div class="dr-val" id="detail-date"></div></div>
-        <div class="detail-row"><div class="dr-label">Adresse</div><div class="dr-val" id="detail-addr"></div></div>
-        <div class="detail-row"><div class="dr-label">Puissance de la prise</div><div class="dr-val" id="detail-power"></div></div>
-        <div class="detail-row"><div class="dr-label">Nombre de prises disponibles</div><div class="dr-val" id="detail-slots"></div></div>
-        <div class="detail-row"><div class="dr-label">Lien de la borne</div><div class="dr-val"><a class="detail-link" id="detail-link" href="#" target="_blank"></a></div></div>
-      </div>
-      <div class="detail-map" id="detail-map-container">
-        <svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg" id="detail-map-svg">
-          <rect width="400" height="260" fill="#1a3a5c"/>
-          <path class="brittany-path" d="M40,80 Q70,50 120,60 Q180,45 240,55 Q300,48 360,65 Q390,75 385,105 Q380,130 360,145 Q320,165 270,158 Q230,168 190,160 Q150,170 115,158 Q80,165 55,145 Q28,132 40,80Z" style="fill:#2a6496;stroke:#3a7ab0;stroke-width:0.8"/>
-        </svg>
-      </div>
+  <!-- TABLEAU DE RÉSULTATS — Fonctionnalité 3 (affiché sans changer de page) -->
+  <section class="results-section" id="results-section" style="display:none;">
+    <div class="results-header">
+      <h2>Résultats</h2>
+      <span id="results-count" class="result-badge"></span>
+    </div>
+
+    <div class="table-wrapper-results">
+      <table id="results-table">
+        <thead>
+          <tr>
+            <th>Date de mise en service</th>
+            <th>Nb de points</th>
+            <th>Type de prise</th>
+            <th>Puissance (kW)</th>
+            <th>Localisation</th>
+            <th>Détails</th>
+          </tr>
+        </thead>
+        <tbody id="results-tbody">
+          <!-- Rempli dynamiquement par script.js -->
+        </tbody>
+      </table>
     </div>
   </section>
 
+  <!-- PIED DE PAGE -->
   <footer>
-    <p>© 2026 <span>BreizhOhm</span> — Groupe 43 · IRVE · CIR2 · Données issues du fichier IRVE Bretagne</p>
+    <p>© 2026 <span>BreizhOhm</span> — Pereira-Touzé Rafael &amp; Partenaire — Groupe 43 · CIR2 · ISEN Ouest</p>
   </footer>
 </div>
+
+<!-- ========================================================= -->
+<!--  PAGE 3 : DÉTAIL D'UNE INSTALLATION — Fonctionnalité 4   -->
+<!-- ========================================================= -->
+<div id="page-detail" class="page">
+
+  <div class="detail-page-wrapper">
+    <div class="detail-back">
+      <button class="btn-back" onclick="showPage('search')">← Retour aux résultats</button>
+    </div>
+
+    <h2 id="dp-title">Détail de l'installation</h2>
+
+    <div class="detail-card">
+      <div class="detail-info">
+        <h3>Informations générales</h3>
+        <div class="detail-row"><div class="dr-label">Aménageur</div><div class="dr-val" id="dp-amenageur"></div></div>
+        <div class="detail-row"><div class="dr-label">Opérateur</div><div class="dr-val" id="dp-operateur"></div></div>
+        <div class="detail-row"><div class="dr-label">Enseigne</div><div class="dr-val" id="dp-enseigne"></div></div>
+        <div class="detail-row"><div class="dr-label">ID station</div><div class="dr-val" id="dp-id-station"></div></div>
+
+        <h3 style="margin-top:20px;">Caractéristiques</h3>
+        <div class="detail-row"><div class="dr-label">Date de mise en service</div><div class="dr-val" id="dp-date"></div></div>
+        <div class="detail-row"><div class="dr-label">Nombre de points (PDC)</div><div class="dr-val" id="dp-pdc"></div></div>
+        <div class="detail-row"><div class="dr-label">Type de prise</div><div class="dr-val" id="dp-prise"></div></div>
+        <div class="detail-row"><div class="dr-label">Puissance nominale</div><div class="dr-val" id="dp-puissance"></div></div>
+        <div class="detail-row"><div class="dr-label">Accès recharge</div><div class="dr-val" id="dp-acces"></div></div>
+        <div class="detail-row"><div class="dr-label">Horaires</div><div class="dr-val" id="dp-horaires"></div></div>
+
+        <h3 style="margin-top:20px;">Localisation</h3>
+        <div class="detail-row"><div class="dr-label">Adresse</div><div class="dr-val" id="dp-adresse"></div></div>
+        <div class="detail-row"><div class="dr-label">Commune</div><div class="dr-val" id="dp-commune"></div></div>
+        <div class="detail-row"><div class="dr-label">Département</div><div class="dr-val" id="dp-dept"></div></div>
+        <div class="detail-row"><div class="dr-label">Coordonnées GPS</div><div class="dr-val" id="dp-coords"></div></div>
+      </div>
+
+      <!-- Mini-carte Leaflet pour la borne -->
+      <div class="detail-map" id="dp-map-container"></div>
+    </div>
+  </div>
+
+  <!-- PIED DE PAGE -->
+  <footer>
+    <p>© 2026 <span>BreizhOhm</span> — Pereira-Touzé Rafael &amp; Partenaire — Groupe 43 · CIR2 · ISEN Ouest</p>
+  </footer>
+</div>
+
+<!-- ========================================================= -->
+<!--  PAGE 4 : CARTE — Fonctionnalité 5                        -->
+<!-- ========================================================= -->
+<div id="page-carte" class="page">
+
+  <div class="search-hero">
+    <div class="search-hero-content">
+      <h1>Carte des bornes de recharge</h1>
+      <p>Visualisez la répartition géographique des bornes en Bretagne.
+         Filtrez par année d'installation et par département.</p>
+    </div>
+  </div>
+
+  <!-- Formulaire carte : 2 selects (année, département) -->
+  <section class="criteria-section">
+    <h2 style="margin-bottom:24px;">Filtrer l'affichage :</h2>
+    <div class="search-form">
+      <!-- Année d'installation (~20 items) -->
+      <div class="form-field">
+        <label for="carte-annee">Année d'installation</label>
+        <select id="carte-annee">
+          <option value="">— Toutes —</option>
+          <option value="2014">2014</option>
+          <option value="2015">2015</option>
+          <option value="2016">2016</option>
+          <option value="2017">2017</option>
+          <option value="2018">2018</option>
+          <option value="2019">2019</option>
+          <option value="2020">2020</option>
+          <option value="2021">2021</option>
+          <option value="2022">2022</option>
+          <option value="2023">2023</option>
+          <option value="2024">2024</option>
+          <option value="2025">2025</option>
+          <option value="2026">2026</option>
+        </select>
+      </div>
+
+      <!-- Département -->
+      <div class="form-field">
+        <label for="carte-dept">Département</label>
+        <select id="carte-dept">
+          <option value="">— Tous —</option>
+          <option value="29">29 – Finistère</option>
+          <option value="22">22 – Côtes-d'Armor</option>
+          <option value="56">56 – Morbihan</option>
+          <option value="35">35 – Ille-et-Vilaine</option>
+        </select>
+      </div>
+
+      <button class="validate-btn" onclick="afficherCarte()">AFFICHER</button>
+    </div>
+  </section>
+
+  <!-- Carte Leaflet / OpenStreetMap -->
+  <section class="map-section">
+    <div class="map-header">
+      <h2>Bornes affichées :</h2>
+      <p>Cliquez sur un marqueur pour voir les informations et accéder au détail.</p>
+      <div class="result-count" id="carte-count">—</div>
+    </div>
+    <div class="map-container" id="carte-leaflet-container"></div>
+  </section>
+
+  <!-- PIED DE PAGE -->
+  <footer>
+    <p>© 2026 <span>BreizhOhm</span> — Pereira-Touzé Rafael &amp; Partenaire — Groupe 43 · CIR2 · ISEN Ouest</p>
+  </footer>
+</div>
+
 </body>
 </html>

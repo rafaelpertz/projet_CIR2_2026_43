@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Liste – IRVE Breizh</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="breizh_style.css"/>
+</head>
+<body>
+
+<!-- DEMO NAV -->
+<div id="demo-nav">
+  <span>Back-End</span>
+  <button class="demo-btn" data-page="accueil" onclick="show('accueil')">🏠 Accueil /back/</button>
+  <button class="demo-btn" data-page="liste" onclick="show('liste')">📋 Liste /back/liste</button>
+  <button class="demo-btn" data-page="creation" onclick="show('creation')">➕ Création /back/create</button>
+  <button class="demo-btn" data-page="modification" onclick="show('modification')">✏️ Modification /back/edit/{id}</button>
+  <button class="demo-btn" data-page="detail" onclick="show('detail')">🔍 Détail /back/detail/{id}</button>
+</div>
+
+<div class="page-wrapper">
+  <header>
+    <div class="header-brand">
+      <div class="header-logo"><img src="../assets/logo_breizh_charge_groupe43_v2 (1).png" alt="Breizh Ohm"/></div>
+      <span class="brand-name">Breizh Ohm</span>
+    </div>
+    <nav>
+      <a onclick="show('accueil')">Accueil</a>
+      <a class="active">Liste</a>
+      <a onclick="show('creation')">Ajouter</a>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <div class="url-hint">http://projet-cir2-XX<strong>/back/liste</strong></div>
+      <div class="list-header">
+        <div>
+          <div class="section-title" style="margin-bottom:6px;">Liste des installations</div>
+          <div class="list-count">4 821 enregistrements — affichage limité à 100</div>
+        </div>
+        <button class="btn btn-primary" onclick="show('creation')">+ Ajouter une installation</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Aménageur</th><th>Opérateur</th><th>Commune</th><th>Nb PDC</th><th>Type prise</th><th>Puissance</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>781</td><td>LE ROUX LOISIRS</td><td>freshmile</td><td>Rennes (35)</td><td>3</td><td>T2</td><td>22 kW</td><td class="actions-cell"><button class="btn btn-outline btn-sm" onclick="show('detail')">Voir</button><button class="btn btn-outline btn-sm" onclick="show('modification')">Éditer</button></td></tr>
+            <tr><td>867</td><td>R3</td><td>R3</td><td>Brest (29)</td><td>7</td><td>T3</td><td>50 kW</td><td class="actions-cell"><button class="btn btn-outline btn-sm" onclick="show('detail')">Voir</button><button class="btn btn-outline btn-sm" onclick="show('modification')">Éditer</button></td></tr>
+            <tr><td>1344</td><td>SARL Thouzeau LM</td><td>Evbox</td><td>Caen (14)</td><td>1</td><td>T2</td><td>7.4 kW</td><td class="actions-cell"><button class="btn btn-outline btn-sm" onclick="show('detail')">Voir</button><button class="btn btn-outline btn-sm" onclick="show('modification')">Éditer</button></td></tr>
+            <tr><td colspan="8" style="text-align:center;color:#ccc;padding:16px;font-style:italic;">… 97 autres enregistrements …</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <div class="pnum active">1</div><div class="pnum">2</div><div class="pnum">3</div><div class="pnum">…</div><div class="pnum">97</div>
+        <span style="margin-left:auto;font-size:12px;color:#aaa;">1–50 sur 4 821</span>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-brand"><div class="footer-logo"><img src="../assets/logo_breizh_charge_groupe43_v2 (1).png" alt="Breizh Ohm"/></div><div><div class="footer-name">Breizh Ohm</div></div></div>
+    <div class="footer-meta"><p>Florian Muller / Rafaël Touzé</p><p>CIN2 2026 groupe 43</p></div>
+  </footer>
+</div>
+
+<script src="breizh_script.js"></script>
+</body>
+</html>

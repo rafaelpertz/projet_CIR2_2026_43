@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Modification – IRVE Breizh</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="breizh_style.css"/>
+</head>
+<body>
+
+<!-- DEMO NAV -->
+<div id="demo-nav">
+  <span>Back-End</span>
+  <button class="demo-btn" data-page="accueil" onclick="show('accueil')">🏠 Accueil /back/</button>
+  <button class="demo-btn" data-page="liste" onclick="show('liste')">📋 Liste /back/liste</button>
+  <button class="demo-btn" data-page="creation" onclick="show('creation')">➕ Création /back/create</button>
+  <button class="demo-btn" data-page="modification" onclick="show('modification')">✏️ Modification /back/edit/{id}</button>
+  <button class="demo-btn" data-page="detail" onclick="show('detail')">🔍 Détail /back/detail/{id}</button>
+</div>
+
+<div class="page-wrapper">
+  <header>
+    <div class="header-brand">
+      <div class="header-logo"><img src="../assets/logo_breizh_charge_groupe43_v2 (1).png" alt="Breizh Ohm"/></div>
+      <span class="brand-name">Breizh Ohm</span>
+    </div>
+    <nav>
+      <a onclick="show('accueil')">Accueil</a>
+      <a onclick="show('liste')">Liste</a>
+      <a onclick="show('creation')">Ajouter</a>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <div class="url-hint">http://projet-cir2-XX<strong>/back/edit/781</strong></div>
+      <div class="alert alert-warn">✏️ Vous modifiez l'installation <strong>#781 – LE ROUX LOISIRS</strong></div>
+      <div class="section-layout">
+        <div>
+          <div class="section-title">Modifier un point de charge</div>
+          <p style="font-size:13px;color:#aaa;margin-top:10px;">Modifiez les champs souhaités puis sauvegardez.</p>
+        </div>
+        <div class="form-wrap">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nom aménageur <span class="req">*</span></label>
+              <input type="text" value="LE ROUX LOISIRS"/>
+            </div>
+            <div class="form-group">
+              <label>Siren aménageur</label>
+              <input type="text" value="453386120"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Contact aménageur</label>
+            <input type="email" value="tech@domainependruc.com"/>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nom opérateur</label>
+              <input type="text" value="freshmile"/>
+            </div>
+            <div class="form-group">
+              <label>Type de prise</label>
+              <select><option selected>T2</option><option>T3</option><option>CHAdeMO</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nombre de PDC</label>
+              <input type="number" value="3"/>
+            </div>
+            <div class="form-group">
+              <label>Puissance (kW)</label>
+              <input type="number" value="22"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Commune</label>
+              <input type="text" value="Rennes"/>
+            </div>
+            <div class="form-group">
+              <label>Département</label>
+              <select><option selected>35 – Ille-et-Vilaine</option></select>
+            </div>
+          </div>
+          <div class="form-actions" style="justify-content:space-between;">
+            <button class="btn" style="background:#fde8e8;color:#c0392b;border:1px solid #fca5a5;">Supprimer</button>
+            <div style="display:flex;gap:10px;">
+              <button class="btn btn-outline" onclick="show('detail')">Annuler</button>
+              <button class="btn btn-primary">Enregistrer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-brand"><div class="footer-logo"><img src="../assets/logo_breizh_charge_groupe43_v2 (1).png" alt="Breizh Ohm"/></div><div><div class="footer-name">Breizh Ohm</div></div></div>
+    <div class="footer-meta"><p>Florian Muller / Rafaël Touzé</p><p>CIN2 2026 groupe 43</p></div>
+  </footer>
+</div>
+
+<script src="breizh_script.js"></script>
+</body>
+</html>

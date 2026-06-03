@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Détail – IRVE Breizh</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="breizh_style.css"/>
+</head>
+<body>
+
+<!-- DEMO NAV -->
+<div id="demo-nav">
+  <span>Back-End</span>
+  <button class="demo-btn" data-page="accueil" onclick="show('accueil')">🏠 Accueil /back/</button>
+  <button class="demo-btn" data-page="liste" onclick="show('liste')">📋 Liste /back/liste</button>
+  <button class="demo-btn" data-page="creation" onclick="show('creation')">➕ Création /back/create</button>
+  <button class="demo-btn" data-page="modification" onclick="show('modification')">✏️ Modification /back/edit/{id}</button>
+  <button class="demo-btn" data-page="detail" onclick="show('detail')">🔍 Détail /back/detail/{id}</button>
+</div>
+
+<div class="page-wrapper">
+  <header>
+    <div class="header-brand">
+      <div class="header-logo"><img src="../assets/logo_breizh_charge_groupe43_v2 (1).png" alt="Breizh Ohm"/></div>
+      <span class="brand-name">Breizh Ohm</span>
+    </div>
+    <nav>
+      <a onclick="show('accueil')">Accueil</a>
+      <a onclick="show('liste')">Liste</a>
+      <a onclick="show('creation')">Ajouter</a>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <div class="url-hint">http://projet-cir2-XX<strong>/back/detail/781</strong></div>
+      <div class="section-layout" style="margin-bottom:24px;">
+        <div><div class="section-title">Visualisation item :</div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <button class="btn btn-primary" onclick="show('modification')">✏️ Modifier</button>
+          <button class="btn btn-outline" onclick="show('liste')">← Retour</button>
+        </div>
+      </div>
+
+      <div style="max-width:700px;">
+        <p style="font-size:13px;color:#aaa;margin-bottom:20px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;">Aménageur &amp; Opérateur</p>
+        <table class="detail-table">
+          <tr><th>Nom aménageur</th><td>LE ROUX LOISIRS</td></tr>
+          <tr><th>Siren</th><td>453386120</td></tr>
+          <tr><th>Contact aménageur</th><td>tech@domainependruc.com</td></tr>
+          <tr><th>Nom opérateur</th><td>freshmile</td></tr>
+          <tr><th>Contact opérateur</th><td>gregoire.schaffhauser@freshmile.com</td></tr>
+          <tr><th>Téléphone</th><td>368781435</td></tr>
+        </table>
+
+        <p style="font-size:13px;color:#aaa;margin:24px 0 12px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;">Installation</p>
+        <table class="detail-table">
+          <tr><th>ID station</th><td>FR*LRL*P0001</td></tr>
+          <tr><th>Nombre de PDC</th><td>3</td></tr>
+          <tr><th>Type de prise</th><td>T2 (Type 2)</td></tr>
+          <tr><th>Puissance nominale</th><td>22 kW</td></tr>
+          <tr><th>Date mise en service</th><td>Juin 2021</td></tr>
+          <tr><th>Accès</th><td>Libre</td></tr>
+        </table>
+
+        <p style="font-size:13px;color:#aaa;margin:24px 0 12px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;">Localisation</p>
+        <table class="detail-table">
+          <tr><th>Commune</th><td>Rennes</td></tr>
+          <tr><th>Département</th><td>35 – Ille-et-Vilaine</td></tr>
+          <tr><th>Adresse</th><td>12 Allée du Parc, 35000 Rennes</td></tr>
+          <tr><th>Latitude</th><td>48.11726</td></tr>
+          <tr><th>Longitude</th><td>-1.67792</td></tr>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-brand"><div class="footer-logo"><img src="../assets/logo_breizh_charge_groupe43_v2 (1).png" alt="Breizh Ohm"/></div><div><div class="footer-name">Breizh Ohm</div></div></div>
+    <div class="footer-meta"><p>Florian Muller / Rafaël Touzé</p><p>CIN2 2026 groupe 43</p></div>
+  </footer>
+</div>
+
+<script src="breizh_script.js"></script>
+</body>
+</html>

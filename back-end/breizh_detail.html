@@ -22,7 +22,7 @@
 <div class="page-wrapper">
   <header>
     <div class="header-brand">
-      <div class="header-logo"><img src="../assets/logo_breizh_charge_groupe43_v2 (1).png" alt="Breizh Ohm"/></div>
+      <div class="header-logo"><img src="../assets/logo_breizh_charge_groupe43_v2.png" alt="Breizh Ohm"/></div>
       <span class="brand-name">Breizh Ohm</span>
     </div>
     <nav>
@@ -34,13 +34,27 @@
 
   <main>
     <section>
-      <div class="url-hint">http://projet-cir2-XX<strong>/back/detail/781</strong></div>
       <div class="section-layout" style="margin-bottom:24px;">
         <div><div class="section-title">Visualisation item :</div></div>
         <div style="display:flex;gap:10px;align-items:flex-start;">
           <button class="btn btn-primary" onclick="show('modification')">✏️ Modifier</button>
           <button class="btn btn-outline" onclick="show('liste')">← Retour</button>
         </div>
+      </div>
+
+      <div style="max-width:700px;margin-bottom:28px;">
+        <form id="search-form" onsubmit="searchAmenageur(event)" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Rechercher par nom d'aménageur…"
+            style="flex:1;min-width:220px;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s;"
+            onfocus="this.style.borderColor='#4a7c59'"
+            onblur="this.style.borderColor='#ddd'"
+          />
+          <button type="submit" class="btn btn-primary">🔍 Rechercher</button>
+        </form>
+        <div id="search-results" style="margin-top:16px;"></div>
       </div>
 
       <div style="max-width:700px;">
@@ -77,11 +91,61 @@
   </main>
 
   <footer>
-    <div class="footer-brand"><div class="footer-logo"><img src="../assets/logo_breizh_charge_groupe43_v2 (1).png" alt="Breizh Ohm"/></div><div><div class="footer-name">Breizh Ohm</div></div></div>
-    <div class="footer-meta"><p>Florian Muller / Rafaël Touzé</p><p>CIN2 2026 groupe 43</p></div>
+    <div class="footer-brand"><div class="footer-logo"><img src="../assets/logo_breizh_charge_groupe43_v2.png" alt="Breizh Ohm"/></div><div><div class="footer-name">Breizh Ohm</div></div></div>
+    <div class="footer-meta"><p>Florian Muller / Rafaël Touzé</p><p>CIN2 2026 groupe 13</p></div>
   </footer>
 </div>
 
 <script src="breizh_script.js"></script>
+<script>
+const amenageurs = [
+  { nom: "LE ROUX LOISIRS", siren: "453386120", contact: "tech@domainependruc.com", operateur: "freshmile", commune: "Rennes" },
+  { nom: "BREIZH ÉNERGIE", siren: "512047839", contact: "contact@breizh-energie.fr", operateur: "izivia", commune: "Brest" },
+  { nom: "ARMOR MOBILITÉ", siren: "387654210", contact: "info@armor-mobilite.com", operateur: "engie", commune: "Saint-Brieuc" },
+  { nom: "FINISTÈRE CHARGE", siren: "601234567", contact: "admin@fin-charge.fr", operateur: "totalenergies", commune: "Quimper" },
+];
+
+function searchAmenageur(e) {
+  e.preventDefault();
+  const query = document.getElementById("search-input").value.trim().toLowerCase();
+  const container = document.getElementById("search-results");
+
+  if (!query) {
+    container.innerHTML = "";
+    return;
+  }
+
+  const found = amenageurs.filter(a => a.nom.toLowerCase().includes(query));
+
+  if (found.length === 0) {
+    container.innerHTML = `<p style="color:#e74c3c;font-size:14px;">Aucun aménageur trouvé pour « ${query} ».</p>`;
+    return;
+  }
+
+  const rows = found.map(a => `
+    <tr>
+      <td style="padding:8px 12px;">${a.nom}</td>
+      <td style="padding:8px 12px;">${a.siren}</td>
+      <td style="padding:8px 12px;">${a.contact}</td>
+      <td style="padding:8px 12px;">${a.operateur}</td>
+      <td style="padding:8px 12px;">${a.commune}</td>
+    </tr>`).join("");
+
+  container.innerHTML = `
+    <p style="font-size:13px;color:#aaa;font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">${found.length} résultat(s)</p>
+    <table class="detail-table" style="max-width:700px;width:100%;">
+      <thead>
+        <tr style="background:#f5f5f5;">
+          <th style="padding:8px 12px;text-align:left;">Nom aménageur</th>
+          <th style="padding:8px 12px;text-align:left;">Siren</th>
+          <th style="padding:8px 12px;text-align:left;">Contact</th>
+          <th style="padding:8px 12px;text-align:left;">Opérateur</th>
+          <th style="padding:8px 12px;text-align:left;">Commune</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+</script>
 </body>
 </html>

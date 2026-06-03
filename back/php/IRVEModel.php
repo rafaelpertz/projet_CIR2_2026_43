@@ -247,14 +247,18 @@ class IRVEModel {
     }
 
     // ----------------------------------------------------------
-    //  SUPPRESSION — Supprime le PDC ; supprime aussi la station
-    //  si c'était son dernier PDC (amenageur/operateur conservés)
+    //  SUPPRESSION — Supprime la station, tous ses PDC et l'amenageur
+    //  (CASCADE FK : station → pdc → pdc_type_prise)
     // ----------------------------------------------------------
     public function delete(int $id): bool {
         $this->db->beginTransaction();
         try {
+            // Trouver la station et son amenageur à partir du PDC ciblé
             $stmt = $this->db->prepare(
-                "SELECT id_station_locale FROM pdc WHERE id_pdc = :id"
+                "SELECT s.id_station_locale, s.id_amenageur
+                 FROM pdc p
+                 JOIN station s ON p.id_station_locale = s.id_station_locale
+                 WHERE p.id_pdc = :id"
             );
             $stmt->execute([':id' => $id]);
             $row = $stmt->fetch();
@@ -262,20 +266,23 @@ class IRVEModel {
                 $this->db->rollBack();
                 return false;
             }
-            $id_sl = $row['id_station_locale'];
 
-            // Supprimer le PDC (pdc_type_prise supprimé par CASCADE)
-            $this->db->prepare("DELETE FROM pdc WHERE id_pdc = :id")
-                     ->execute([':id' => $id]);
+            $id_amenageur = $row['id_amenageur'];
 
-            // Si plus aucun PDC pour cette station → supprimer la station
-            $cnt = $this->db->prepare(
-                "SELECT COUNT(*) FROM pdc WHERE id_station_locale = :id_sl"
-            );
-            $cnt->execute([':id_sl' => $id_sl]);
-            if ((int) $cnt->fetchColumn() === 0) {
-                $this->db->prepare("DELETE FROM station WHERE id_station_locale = :id_sl")
-                         ->execute([':id_sl' => $id_sl]);
+            // Supprimer la station → cascade sur tous ses PDC et pdc_type_prise
+            $this->db->prepare("DELETE FROM station WHERE id_station_locale = :id_sl")
+                     ->execute([':id_sl' => $row['id_station_locale']]);
+
+            // Supprimer l'amenageur s'il n'est plus lié à aucune autre station
+            if ($id_amenageur !== null) {
+                $cnt = $this->db->prepare(
+                    "SELECT COUNT(*) FROM station WHERE id_amenageur = :id_a"
+                );
+                $cnt->execute([':id_a' => $id_amenageur]);
+                if ((int) $cnt->fetchColumn() === 0) {
+                    $this->db->prepare("DELETE FROM amenageur WHERE id_amenageur = :id_a")
+                             ->execute([':id_a' => $id_amenageur]);
+                }
             }
 
             $this->db->commit();

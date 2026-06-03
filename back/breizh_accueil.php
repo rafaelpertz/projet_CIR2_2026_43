@@ -6,18 +6,21 @@
   <title>Accueil – IRVE Breizh</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="breizh_style.css"/>
-  <script src="/php/config.js"></script>
+  <!-- Aucun JavaScript : navigation via liens <a href="..."> -->
 </head>
 <body>
 
-<!-- DEMO NAV -->
+<!-- ============================================================
+     BARRE DE NAVIGATION DEMO
+     Chaque bouton est un lien <a> vers la page correspondante.
+     La classe "active" est mise en dur sur la page courante.
+============================================================ -->
 <div id="demo-nav">
   <span>Back-End</span>
-  <button class="demo-btn" data-page="accueil" onclick="show('accueil')">🏠 Accueil /back/</button>
-  <button class="demo-btn" data-page="creation" onclick="show('creation')">➕ Création /back/create</button>
-  <!-- <button class="demo-btn" data-page="modification" onclick="show('modification')">✏️ Modification /back/edit/{id}</button> -->
-  <button class="demo-btn" data-page="detail" onclick="show('detail')">🔍 Détail /back/detail/{id}</button>
-  <button class="demo-btn" data-page="liste" onclick="show('liste')">📋 Liste /back/liste</button>
+  <a class="demo-btn active" href="breizh_accueil.php">🏠 Accueil</a>
+  <a class="demo-btn" href="breizh_creation.php">➕ Création</a>
+  <a class="demo-btn" href="breizh_detail.php">🔍 Détail</a>
+  <a class="demo-btn" href="breizh_liste.php">📋 Liste</a>
 </div>
 
 <div class="page-wrapper">
@@ -29,9 +32,9 @@
       <span class="brand-name">Breizh Ohm</span>
     </div>
     <nav>
-      <a class="active" onclick="show('accueil')">Accueil</a>
-      <a onclick="show('liste')">Liste</a>
-      <a onclick="show('creation')">Ajouter</a>
+      <a class="active" href="breizh_accueil.php">Accueil</a>
+      <a href="breizh_liste.php">Liste</a>
+      <a href="breizh_creation.php">Ajouter</a>
     </nav>
   </header>
 
@@ -42,12 +45,12 @@
       <div class="hero-content">
         <h1>Envie d'ajouter / modifier les informations d'une borne de charge.</h1>
         <div class="hero-btns">
-          <button class="btn-hero" onclick="show('creation')">Ajouter un point de charge</button>
-          <button class="btn-hero" onclick="show('modification')">Modifier un point de charge</button>
+          <!-- Les boutons hero sont des liens déguisés en boutons -->
+          <a class="btn-hero" href="breizh_creation.php">Ajouter un point de charge</a>
+          <a class="btn-hero" href="breizh_modification.php">Modifier un point de charge</a>
         </div>
       </div>
     </div>
-
   </main>
 
   <footer>
@@ -65,6 +68,5 @@
   </footer>
 </div>
 
-<script src="breizh_script.js"></script>
 </body>
 </html>

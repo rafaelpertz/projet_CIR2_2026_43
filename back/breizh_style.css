@@ -1,6 +1,8 @@
 /* ===== BASE ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Inter', sans-serif; background: #f5f4f2; color: #1a1a1a; min-height: 100vh; }
+/* Force tous les éléments de formulaire à hériter la police du body */
+button, input, select, textarea, a { font-family: inherit; }
 
 /* ===== DEMO NAV ===== */
 #demo-nav {
@@ -12,10 +14,14 @@ body { font-family: 'Inter', sans-serif; background: #f5f4f2; color: #1a1a1a; mi
 .demo-btn {
   background: #f5f4f2; color: #555; border: 1px solid #ddd;
   padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 11px; font-family: 'Inter', sans-serif;
-  transition: all 0.2s;
+  transition: all 0.2s; text-decoration-line: none;
 }
 .demo-btn:hover { background: #e8845a; color: #fff; border-color: #e8845a; }
 .demo-btn.active { background: #e8845a; color: #fff; border-color: #e8845a; }
+/* Permet d'utiliser <a class="..."> comme liens-boutons sans soulignement */
+a.demo-btn { text-decoration: none; display: inline-block; }
+a.btn      { text-decoration: none; }
+a.btn-hero { text-decoration: none; display: inline-block; text-align: center; }
 
 /* ===== PAGE WRAPPER ===== */
 .page-wrapper { display: flex; flex-direction: column; min-height: 100vh; padding-top: 42px; }

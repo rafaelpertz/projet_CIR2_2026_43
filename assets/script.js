@@ -192,48 +192,12 @@ async function chargerSelect(selectId, url, labelKey, valueKey) {
       sel.appendChild(opt);
     });
   } catch (err) {
-    // Données de secours si l'API n'est pas encore disponible
-    console.warn(`API non disponible (${url}) — données de secours chargées.`, err);
-    chargerSelectSecours(selectId);
-  }
-}
-
-/**
- * Données de secours pour les selects si l'API n'est pas encore disponible.
- * @param {string} selectId
- */
-function chargerSelectSecours(selectId) {
-  const secours = {
-    'sel-amenageur': [
-      'LE ROUX LOISIRS','R3','ELECTRIC 55 CHARGING','SARL Thouzeau LM',
-      'Freshmile','Allego','Izivia','TotalEnergies','Leclerc Energie',
-      'E.Leclerc','Lidl France','Auchan Retail','Tesla Motors',
-      'Engie','EDF','CLETIS','Bouygues Energies','DRIVECO',
-      'Elyvia','ChargeGuru'
-    ].map((n, i) => ({ value: String(i+1), label: n })),
-    'sel-prise': [
-      {value:'EF', label:'Type EF (domestique)'},
-      {value:'T2', label:'Type 2'},
-      {value:'CCS',label:'Combo CCS'},
-      {value:'CHD',label:'CHAdeMO'},
-      {value:'AUT',label:'Autre'},
-    ],
-    'sel-dept': [
-      {value:'29', label:'29 – Finistère'},
-      {value:'22', label:'22 – Côtes-d\'Armor'},
-      {value:'56', label:'56 – Morbihan'},
-      {value:'35', label:'35 – Ille-et-Vilaine'},
-    ],
-  };
-
-  const sel = document.getElementById(selectId);
-  if (!sel || !secours[selectId]) return;
-  secours[selectId].forEach(item => {
+    console.error(`Erreur chargement filtre (${url}) :`, err);
     const opt = document.createElement('option');
-    opt.value = item.value;
-    opt.textContent = item.label;
+    opt.disabled = true;
+    opt.textContent = '⚠ Erreur de chargement';
     sel.appendChild(opt);
-  });
+  }
 }
 
 /* ============================================================
@@ -263,8 +227,12 @@ async function lancerRecherche() {
     const donnees = await reponse.json();
     afficherTableauResultats(donnees);
   } catch (err) {
-    console.warn('API non disponible — données de démonstration affichées.', err);
-    afficherTableauResultats(donneesDemo());
+    console.error('Erreur recherche :', err);
+    afficherTableauResultats([]);
+    const section = document.getElementById('results-section');
+    const count   = document.getElementById('results-count');
+    if (count) count.textContent = '⚠ Erreur de connexion à la base de données';
+    if (section) section.style.display = 'block';
   }
 }
 
@@ -316,21 +284,6 @@ function formatDateMoisAnnee(dateStr) {
   return `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
-/**
- * Données de démonstration utilisées quand l'API n'est pas disponible.
- * @returns {Array}
- */
-function donneesDemo() {
-  return [
-    {id:781,  date_mise_en_service:'2021-06-15', nbre_pdc:3,  type_prise:'Type 2',    puissance_nominale:22,   commune:'Rennes',   code_dept:'35'},
-    {id:867,  date_mise_en_service:'2020-03-10', nbre_pdc:7,  type_prise:'Combo CCS', puissance_nominale:50,   commune:'Brest',    code_dept:'29'},
-    {id:1344, date_mise_en_service:'2022-11-01', nbre_pdc:1,  type_prise:'Type 2',    puissance_nominale:7.4,  commune:'Vannes',   code_dept:'56'},
-    {id:2026, date_mise_en_service:'2023-05-20', nbre_pdc:4,  type_prise:'Type EF',   puissance_nominale:3.7,  commune:'Lorient',  code_dept:'56'},
-    {id:2027, date_mise_en_service:'2024-01-12', nbre_pdc:2,  type_prise:'CHAdeMO',   puissance_nominale:50,   commune:'Quimper',  code_dept:'29'},
-    {id:1233, date_mise_en_service:'2019-08-05', nbre_pdc:5,  type_prise:'Type 2',    puissance_nominale:22,   commune:'Saint-Brieuc', code_dept:'22'},
-  ];
-}
-
 /* ============================================================
    FONCTIONNALITÉ 4 — DÉTAIL D'UNE INSTALLATION
    ============================================================ */
@@ -347,21 +300,8 @@ async function afficherDetail(id) {
     const inst = await reponse.json();
     remplirPageDetail(inst);
   } catch (err) {
-    console.warn('API non disponible — données de démonstration.', err);
-    // Cherche dans les données de démo
-    const demo = donneesDemo().find(d => d.id === id) || donneesDemo()[0];
-    remplirPageDetail({
-      ...demo,
-      nom_amenageur: 'LE ROUX LOISIRS',
-      nom_operateur: 'freshmile',
-      nom_enseigne:  'reseau A',
-      id_station:    'FR*LRL*P000' + id,
-      acces_recharge:'Accès libre',
-      horaires:      '24h/24 – 7j/7',
-      adresse_station:'12 Allée du Parc, 35000 Rennes',
-      coordonneesXY_lat: 48.11726,
-      coordonneesXY_lon: -1.67792,
-    });
+    console.error('Erreur chargement détail :', err);
+    document.getElementById('dp-title').textContent = '⚠ Erreur de chargement';
   }
   showPage('detail');
 }
@@ -457,8 +397,8 @@ async function afficherCarte() {
     const points = await reponse.json();
     afficherMarqueurs(points);
   } catch (err) {
-    console.warn('API non disponible — données de démonstration sur la carte.', err);
-    afficherMarqueurs(pointsCarteDemo());
+    console.error('Erreur chargement carte :', err);
+    document.getElementById('carte-count').textContent = '⚠ Erreur';
   }
 }
 
@@ -496,21 +436,3 @@ function afficherMarqueurs(points) {
   });
 }
 
-/**
- * Points de démonstration pour la carte (quand l'API n'est pas disponible).
- * @returns {Array}
- */
-function pointsCarteDemo() {
-  return [
-    {id:781,  lat:48.11726, lon:-1.67792, commune:'Rennes',       puissance_nominale:22,  type_prise:'Type 2'},
-    {id:867,  lat:48.38869, lon:-4.48333, commune:'Brest',        puissance_nominale:50,  type_prise:'Combo CCS'},
-    {id:1344, lat:47.65868, lon:-2.75974, commune:'Vannes',       puissance_nominale:7.4, type_prise:'Type 2'},
-    {id:2026, lat:47.74844, lon:-3.36618, commune:'Lorient',      puissance_nominale:3.7, type_prise:'Type EF'},
-    {id:2027, lat:47.99709, lon:-4.09680, commune:'Quimper',      puissance_nominale:50,  type_prise:'CHAdeMO'},
-    {id:1233, lat:48.51417, lon:-2.76603, commune:'Saint-Brieuc', puissance_nominale:22,  type_prise:'Type 2'},
-    {id:1500, lat:48.65352, lon:-1.63694, commune:'Saint-Malo',   puissance_nominale:22,  type_prise:'Type 2'},
-    {id:1600, lat:48.07000, lon:-1.79000, commune:'Bruz',         puissance_nominale:7.4, type_prise:'Type EF'},
-    {id:1700, lat:48.44000, lon:-4.36000, commune:'Landerneau',   puissance_nominale:22,  type_prise:'Type 2'},
-    {id:1800, lat:47.89000, lon:-2.00000, commune:'Redon',        puissance_nominale:50,  type_prise:'Combo CCS'},
-  ];
-}

@@ -6,6 +6,7 @@
   <title>Accueil – IRVE Breizh</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="breizh_style.css"/>
+  <script src="/php/config.js"></script>
 </head>
 <body>
 
@@ -13,10 +14,10 @@
 <div id="demo-nav">
   <span>Back-End</span>
   <button class="demo-btn" data-page="accueil" onclick="show('accueil')">🏠 Accueil /back/</button>
-  <button class="demo-btn" data-page="liste" onclick="show('liste')">📋 Liste /back/liste</button>
   <button class="demo-btn" data-page="creation" onclick="show('creation')">➕ Création /back/create</button>
-  <button class="demo-btn" data-page="modification" onclick="show('modification')">✏️ Modification /back/edit/{id}</button>
+  <!-- <button class="demo-btn" data-page="modification" onclick="show('modification')">✏️ Modification /back/edit/{id}</button> -->
   <button class="demo-btn" data-page="detail" onclick="show('detail')">🔍 Détail /back/detail/{id}</button>
+  <button class="demo-btn" data-page="liste" onclick="show('liste')">📋 Liste /back/liste</button>
 </div>
 
 <div class="page-wrapper">
@@ -47,158 +48,6 @@
       </div>
     </div>
 
-    <!-- VISUALISATION TABLE -->
-    <section>
-      <div class="section-layout">
-        <div>
-          <div class="section-title">Visualisations de items :</div>
-        </div>
-        <div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>amenageur</th>
-                  <th>siren amenageur</th>
-                  <th>contact amenageur</th>
-                  <th>nom operateur</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>ROUX LOISIRS</td>
-                  <td>453386120</td>
-                  <td>tech@domainependruc.com</td>
-                  <td>freshmile</td>
-                  <td class="actions-cell">
-                    <button class="btn btn-outline btn-sm" onclick="show('detail')">Voir</button>
-                    <button class="btn btn-outline btn-sm" onclick="show('modification')">Éditer</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>R3</td>
-                  <td>902726488</td>
-                  <td>info@r3-charge.fr</td>
-                  <td>R3</td>
-                  <td class="actions-cell">
-                    <button class="btn btn-outline btn-sm" onclick="show('detail')">Voir</button>
-                    <button class="btn btn-outline btn-sm" onclick="show('modification')">Éditer</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>R3</td>
-                  <td>902726488</td>
-                  <td>info@r3-charge.fr</td>
-                  <td>R3</td>
-                  <td class="actions-cell">
-                    <button class="btn btn-outline btn-sm" onclick="show('detail')">Voir</button>
-                    <button class="btn btn-outline btn-sm" onclick="show('modification')">Éditer</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div style="margin-top:16px;display:flex;justify-content:flex-end;">
-            <button class="btn btn-primary" onclick="show('liste')">Voir toute la liste →</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- SAISIE -->
-    <section>
-      <div class="section-layout">
-        <div>
-          <div class="section-title">Saisie d'un nouveau point de charge</div>
-        </div>
-        <div class="form-wrap">
-          <div class="form-group">
-            <label>Nom aménageur <span class="req">*</span></label>
-            <input type="text" placeholder="ex : LE ROUX LOISIRS"/>
-          </div>
-          <div class="form-group">
-            <label>Évaluation globale</label>
-            <div class="stars">
-              <span class="star">☆</span><span class="star">☆</span><span class="star">☆</span><span class="star">☆</span><span class="star">☆</span>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Quel service ou produit avez-vous utilisé ?</label>
-            <input type="text" placeholder=""/>
-          </div>
-          <div class="form-group">
-            <label>Quels résultats ou avantages concrets avez-vous constatés ?</label>
-            <textarea placeholder=""></textarea>
-          </div>
-          <div class="form-group">
-            <label>Pouvons-nous inclure votre témoignage dans nos supports ?</label>
-            <div class="checkbox-group">
-              <label class="checkbox-item"><input type="radio" name="consent_new"/>Oui, avec mon nom.</label>
-              <label class="checkbox-item"><input type="radio" name="consent_new"/>Oui, mais gardez mon anonymat.</label>
-              <label class="checkbox-item"><input type="radio" name="consent_new"/>Non.</label>
-            </div>
-          </div>
-          <button class="btn-submit" onclick="show('creation')">Soumettre un témoignage</button>
-          <p class="form-note">Les données de votre profil Canva sont toujours protégées. Vos réponses prendront de notre part.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- MODIFIER -->
-    <section>
-      <div class="section-layout">
-        <div>
-          <div class="section-title">Modifier un point de charge</div>
-        </div>
-        <div class="form-wrap">
-          <div class="form-group">
-            <label>Nom aménageur <span class="req">*</span></label>
-            <input type="text" value="ROUX LOISIRS"/>
-          </div>
-          <div class="form-group">
-            <label>Évaluation globale</label>
-            <div class="stars">
-              <span class="star" style="color:#e8845a;">★</span><span class="star" style="color:#e8845a;">★</span><span class="star">☆</span><span class="star">☆</span><span class="star">☆</span>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Quel service ou produit avez-vous utilisé ?</label>
-            <input type="text" value="Borne T2 22kW"/>
-          </div>
-          <div class="form-group">
-            <label>Quels résultats ou avantages constatés ?</label>
-            <textarea>Recharge rapide, accès libre 24h/24.</textarea>
-          </div>
-          <div class="form-group">
-            <label>Consentement</label>
-            <div class="checkbox-group">
-              <label class="checkbox-item"><input type="radio" name="consent_edit" checked/>Oui, avec mon nom.</label>
-              <label class="checkbox-item"><input type="radio" name="consent_edit"/>Oui, mais gardez mon anonymat.</label>
-              <label class="checkbox-item"><input type="radio" name="consent_edit"/>Non.</label>
-            </div>
-          </div>
-          <button class="btn-submit" onclick="show('modification')">Soumettre un témoignage</button>
-          <p class="form-note">Les données de votre profil Canva sont toujours protégées. Vos réponses prendront de notre part.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- VISUALISATION ITEM + LISTE -->
-    <section>
-      <div class="section-layout">
-        <div>
-          <div class="section-title">Visualisation item :</div>
-        </div>
-        <div>
-          <button class="btn btn-outline" onclick="show('detail')">Voir le détail complet →</button>
-        </div>
-      </div>
-      <div style="margin-top:40px;text-align:center;">
-        <p style="font-size:13px;color:#aaa;margin-bottom:8px;">ou accéder à</p>
-        <span style="font-family:'Playfair Display',serif;font-size:36px;color:#1a1a1a;cursor:pointer;" onclick="show('liste')">Liste</span>
-      </div>
-    </section>
   </main>
 
   <footer>

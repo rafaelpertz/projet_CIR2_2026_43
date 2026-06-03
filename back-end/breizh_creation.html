@@ -13,10 +13,10 @@
 <div id="demo-nav">
   <span>Back-End</span>
   <button class="demo-btn" data-page="accueil" onclick="show('accueil')">🏠 Accueil /back/</button>
-  <button class="demo-btn" data-page="liste" onclick="show('liste')">📋 Liste /back/liste</button>
   <button class="demo-btn" data-page="creation" onclick="show('creation')">➕ Création /back/create</button>
-  <button class="demo-btn" data-page="modification" onclick="show('modification')">✏️ Modification /back/edit/{id}</button>
+  <!-- <button class="demo-btn" data-page="modification" onclick="show('modification')">✏️ Modification /back/edit/{id}</button> -->
   <button class="demo-btn" data-page="detail" onclick="show('detail')">🔍 Détail /back/detail/{id}</button>
+  <button class="demo-btn" data-page="liste" onclick="show('liste')">📋 Liste /back/liste</button>
 </div>
 
 <div class="page-wrapper">
@@ -40,61 +40,71 @@
           <p style="font-size:13px;color:#aaa;margin-top:10px;">Remplissez les informations ci-contre pour ajouter une nouvelle installation.</p>
         </div>
         <div class="form-wrap">
+          <div id="form-alert" style="display:none;padding:10px 14px;border-radius:8px;margin-bottom:16px;font-size:14px;"></div>
+
           <div class="form-row">
             <div class="form-group">
               <label>Nom aménageur <span class="req">*</span></label>
-              <input type="text" placeholder="ex : LE ROUX LOISIRS"/>
+              <input id="nom_amenageur" type="text" placeholder="ex : LE ROUX LOISIRS"/>
             </div>
             <div class="form-group">
-              <label>Siren aménageur <span class="req">*</span></label>
-              <input type="text" placeholder="ex : 453386120"/>
+              <label>Siren aménageur</label>
+              <input id="siren_amenageur" type="text" placeholder="ex : 453386120"/>
             </div>
           </div>
           <div class="form-group">
             <label>Contact aménageur</label>
-            <input type="email" placeholder="contact@example.com"/>
+            <input id="contact_amenageur" type="email" placeholder="contact@example.com"/>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>Nom opérateur <span class="req">*</span></label>
-              <input type="text" placeholder="ex : freshmile"/>
+              <input id="nom_operateur" type="text" placeholder="ex : freshmile"/>
             </div>
             <div class="form-group">
               <label>Type de prise <span class="req">*</span></label>
-              <select><option value="">-- Sélectionner --</option><option>T2</option><option>T3 (CCS)</option><option>CHAdeMO</option></select>
+              <select id="type_prise">
+                <option value="">-- Sélectionner --</option>
+                <option>T2</option>
+                <option>T3 (CCS)</option>
+                <option>CHAdeMO</option>
+                <option>EF</option>
+              </select>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>Nombre de PDC <span class="req">*</span></label>
-              <input type="number" placeholder="3" min="1"/>
+              <input id="nbre_pdc" type="number" placeholder="3" min="1"/>
             </div>
             <div class="form-group">
               <label>Puissance nominale (kW)</label>
-              <input type="number" placeholder="22" step="0.1"/>
+              <input id="puissance_nominale" type="number" placeholder="22" step="0.1"/>
             </div>
-          </div>
-          <div class="form-group">
-            <label>Commune <span class="req">*</span></label>
-            <input type="text" placeholder="ex : Rennes"/>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Latitude <span class="req">*</span></label>
-              <input type="number" placeholder="48.11726" step="0.00001"/>
+              <label>Commune <span class="req">*</span></label>
+              <input id="nom_commune" type="text" placeholder="ex : Rennes"/>
             </div>
             <div class="form-group">
-              <label>Longitude <span class="req">*</span></label>
-              <input type="number" placeholder="-1.67792" step="0.00001"/>
+              <label>Date de mise en service</label>
+              <input id="date_mise_en_service" type="date"/>
             </div>
           </div>
-          <div class="form-group">
-            <label>Département <span class="req">*</span></label>
-            <select><option value="">--</option><option>29 – Finistère</option><option>35 – Ille-et-Vilaine</option><option>22 – Côtes-d'Armor</option><option>56 – Morbihan</option></select>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Latitude</label>
+              <input id="lat" type="number" placeholder="48.11726" step="0.00001"/>
+            </div>
+            <div class="form-group">
+              <label>Longitude</label>
+              <input id="lng" type="number" placeholder="-1.67792" step="0.00001"/>
+            </div>
           </div>
           <div class="form-actions">
             <button class="btn btn-outline" onclick="show('liste')">Annuler</button>
-            <button class="btn btn-primary">Enregistrer l'installation</button>
+            <button id="btn-submit" class="btn btn-primary" onclick="enregistrerInstallation()">Enregistrer l'installation</button>
           </div>
         </div>
       </div>
@@ -108,5 +118,74 @@
 </div>
 
 <script src="breizh_script.js"></script>
+<script>
+function g(id) { return document.getElementById(id); }
+
+function showAlert(msg, isError) {
+  const el = g('form-alert');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background = isError ? '#fde8e8' : '#e8f5e9';
+  el.style.color      = isError ? '#c0392b'  : '#2e7d32';
+}
+
+async function enregistrerInstallation() {
+  const lat = g('lat').value;
+  const lng = g('lng').value;
+
+  const required = [
+    { id: 'nom_amenageur', label: 'Nom aménageur' },
+    { id: 'nom_operateur', label: 'Nom opérateur' },
+    { id: 'nom_commune',   label: 'Commune' },
+    { id: 'nbre_pdc',      label: 'Nombre de PDC' },
+    { id: 'type_prise',    label: 'Type de prise' },
+  ];
+  for (const f of required) {
+    if (!g(f.id).value.trim()) {
+      showAlert('Le champ « ' + f.label + ' » est obligatoire.', true);
+      g(f.id).focus();
+      return;
+    }
+  }
+
+  const data = {
+    nom_amenageur:        g('nom_amenageur').value.trim(),
+    siren_amenageur:      g('siren_amenageur').value.trim(),
+    contact_amenageur:    g('contact_amenageur').value.trim(),
+    nom_operateur:        g('nom_operateur').value.trim(),
+    nom_commune:          g('nom_commune').value.trim(),
+    nbre_pdc:             parseInt(g('nbre_pdc').value) || null,
+    type_prise:           g('type_prise').value,
+    puissance_nominale:   g('puissance_nominale').value ? parseFloat(g('puissance_nominale').value) : null,
+    date_mise_en_service: g('date_mise_en_service').value || null,
+    coordonneesXY:        lat && lng ? lng + ',' + lat : null,
+  };
+
+  const btn = g('btn-submit');
+  btn.disabled = true;
+  btn.textContent = 'Enregistrement…';
+
+  try {
+    const res  = await fetch('php/api.php?action=create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const json = await res.json();
+
+    if (json.success) {
+      show('detail', json.id);
+    } else {
+      showAlert('Erreur : ' + (json.error || 'Échec de l\'enregistrement.'), true);
+      btn.disabled = false;
+      btn.textContent = 'Enregistrer l\'installation';
+    }
+  } catch (err) {
+    showAlert('Erreur de connexion à la base de données.', true);
+    btn.disabled = false;
+    btn.textContent = 'Enregistrer l\'installation';
+  }
+}
+</script>
 </body>
 </html>

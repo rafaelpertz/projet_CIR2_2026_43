@@ -13,10 +13,10 @@
 <div id="demo-nav">
   <span>Back-End</span>
   <button class="demo-btn" data-page="accueil" onclick="show('accueil')">🏠 Accueil /back/</button>
-  <button class="demo-btn" data-page="liste" onclick="show('liste')">📋 Liste /back/liste</button>
   <button class="demo-btn" data-page="creation" onclick="show('creation')">➕ Création /back/create</button>
-  <button class="demo-btn" data-page="modification" onclick="show('modification')">✏️ Modification /back/edit/{id}</button>
+  <!-- <button class="demo-btn" data-page="modification" onclick="show('modification')">✏️ Modification /back/edit/{id}</button> -->
   <button class="demo-btn" data-page="detail" onclick="show('detail')">🔍 Détail /back/detail/{id}</button>
+  <button class="demo-btn" data-page="liste" onclick="show('liste')">📋 Liste /back/liste</button>
 </div>
 
 <div class="page-wrapper">
@@ -36,12 +36,9 @@
     <section>
       <div class="section-layout" style="margin-bottom:24px;">
         <div><div class="section-title">Visualisation item :</div></div>
-        <div style="display:flex;gap:10px;align-items:flex-start;">
-          <button class="btn btn-primary" onclick="show('modification')">✏️ Modifier</button>
-          <button class="btn btn-outline" onclick="show('liste')">← Retour</button>
-        </div>
       </div>
 
+      <!-- Barre de recherche par nom d'aménageur -->
       <div style="max-width:700px;margin-bottom:28px;">
         <form id="search-form" onsubmit="searchAmenageur(event)" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <input
@@ -57,36 +54,42 @@
         <div id="search-results" style="margin-top:16px;"></div>
       </div>
 
-      <div style="max-width:700px;">
+      <!-- Détail de l'item -->
+      <div id="detail-wrap" style="max-width:700px;">
         <p style="font-size:13px;color:#aaa;margin-bottom:20px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;">Aménageur &amp; Opérateur</p>
         <table class="detail-table">
-          <tr><th>Nom aménageur</th><td>LE ROUX LOISIRS</td></tr>
-          <tr><th>Siren</th><td>453386120</td></tr>
-          <tr><th>Contact aménageur</th><td>tech@domainependruc.com</td></tr>
-          <tr><th>Nom opérateur</th><td>freshmile</td></tr>
-          <tr><th>Contact opérateur</th><td>gregoire.schaffhauser@freshmile.com</td></tr>
-          <tr><th>Téléphone</th><td>368781435</td></tr>
+          <tr><th>Nom aménageur</th>    <td id="td-nom-amenageur">—</td></tr>
+          <tr><th>Siren</th>            <td id="td-siren">—</td></tr>
+          <tr><th>Contact aménageur</th><td id="td-contact-amenageur">—</td></tr>
+          <tr><th>Nom opérateur</th>    <td id="td-nom-operateur">—</td></tr>
+          <tr><th>Contact opérateur</th><td id="td-contact-operateur">—</td></tr>
+          <tr><th>Téléphone</th>        <td id="td-telephone">—</td></tr>
         </table>
 
         <p style="font-size:13px;color:#aaa;margin:24px 0 12px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;">Installation</p>
         <table class="detail-table">
-          <tr><th>ID station</th><td>FR*LRL*P0001</td></tr>
-          <tr><th>Nombre de PDC</th><td>3</td></tr>
-          <tr><th>Type de prise</th><td>T2 (Type 2)</td></tr>
-          <tr><th>Puissance nominale</th><td>22 kW</td></tr>
-          <tr><th>Date mise en service</th><td>Juin 2021</td></tr>
-          <tr><th>Accès</th><td>Libre</td></tr>
+          <tr><th>ID station</th>          <td id="td-id-station">—</td></tr>
+          <tr><th>Nombre de PDC</th>       <td id="td-nbre-pdc">—</td></tr>
+          <tr><th>Type de prise</th>       <td id="td-type-prise">—</td></tr>
+          <tr><th>Puissance nominale</th>  <td id="td-puissance">—</td></tr>
+          <tr><th>Date mise en service</th><td id="td-date">—</td></tr>
+          <tr><th>Accès</th>              <td id="td-acces">—</td></tr>
         </table>
 
         <p style="font-size:13px;color:#aaa;margin:24px 0 12px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;">Localisation</p>
         <table class="detail-table">
-          <tr><th>Commune</th><td>Rennes</td></tr>
-          <tr><th>Département</th><td>35 – Ille-et-Vilaine</td></tr>
-          <tr><th>Adresse</th><td>12 Allée du Parc, 35000 Rennes</td></tr>
-          <tr><th>Latitude</th><td>48.11726</td></tr>
-          <tr><th>Longitude</th><td>-1.67792</td></tr>
+          <tr><th>Commune</th>    <td id="td-commune">—</td></tr>
+          <tr><th>Département</th><td id="td-departement">—</td></tr>
+          <tr><th>Adresse</th>    <td id="td-adresse">—</td></tr>
+          <tr><th>Latitude</th>   <td id="td-lat">—</td></tr>
+          <tr><th>Longitude</th>  <td id="td-lng">—</td></tr>
         </table>
       </div>
+      <br>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <button class="btn btn-primary" id="btn-modifier" onclick="modifierItem()">✏️ Modifier</button>
+          <button class="btn btn-outline" onclick="show('liste')">← Retour</button>
+        </div>
     </section>
   </main>
 
@@ -98,54 +101,105 @@
 
 <script src="breizh_script.js"></script>
 <script>
-const amenageurs = [
-  { nom: "LE ROUX LOISIRS", siren: "453386120", contact: "tech@domainependruc.com", operateur: "freshmile", commune: "Rennes" },
-  { nom: "BREIZH ÉNERGIE", siren: "512047839", contact: "contact@breizh-energie.fr", operateur: "izivia", commune: "Brest" },
-  { nom: "ARMOR MOBILITÉ", siren: "387654210", contact: "info@armor-mobilite.com", operateur: "engie", commune: "Saint-Brieuc" },
-  { nom: "FINISTÈRE CHARGE", siren: "601234567", contact: "admin@fin-charge.fr", operateur: "totalenergies", commune: "Quimper" },
-];
+const params    = new URLSearchParams(window.location.search);
+const currentId = parseInt(params.get('id')) || 0;
 
-function searchAmenageur(e) {
-  e.preventDefault();
-  const query = document.getElementById("search-input").value.trim().toLowerCase();
-  const container = document.getElementById("search-results");
+const depts = {'22':'22 – Côtes-d\'Armor','29':'29 – Finistère','35':'35 – Ille-et-Vilaine','56':'56 – Morbihan'};
+const esc   = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const val   = (item, k) => item[k] || '—';
 
-  if (!query) {
-    container.innerHTML = "";
-    return;
-  }
-
-  const found = amenageurs.filter(a => a.nom.toLowerCase().includes(query));
-
-  if (found.length === 0) {
-    container.innerHTML = `<p style="color:#e74c3c;font-size:14px;">Aucun aménageur trouvé pour « ${query} ».</p>`;
-    return;
-  }
-
-  const rows = found.map(a => `
-    <tr>
-      <td style="padding:8px 12px;">${a.nom}</td>
-      <td style="padding:8px 12px;">${a.siren}</td>
-      <td style="padding:8px 12px;">${a.contact}</td>
-      <td style="padding:8px 12px;">${a.operateur}</td>
-      <td style="padding:8px 12px;">${a.commune}</td>
-    </tr>`).join("");
-
-  container.innerHTML = `
-    <p style="font-size:13px;color:#aaa;font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">${found.length} résultat(s)</p>
-    <table class="detail-table" style="max-width:700px;width:100%;">
-      <thead>
-        <tr style="background:#f5f5f5;">
-          <th style="padding:8px 12px;text-align:left;">Nom aménageur</th>
-          <th style="padding:8px 12px;text-align:left;">Siren</th>
-          <th style="padding:8px 12px;text-align:left;">Contact</th>
-          <th style="padding:8px 12px;text-align:left;">Opérateur</th>
-          <th style="padding:8px 12px;text-align:left;">Commune</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>`;
+function modifierItem() {
+  show('modification', currentId || undefined);
 }
+
+async function loadDetail() {
+  if (!currentId) return;
+  try {
+    const res  = await fetch('php/api.php?action=detail&id=' + currentId);
+    const item = await res.json();
+    if (!item) return;
+
+    let lat = '—', lng = '—';
+    if (item.coordonneesXY) {
+      const parts = String(item.coordonneesXY).split(',');
+      lng = parts[0] || '—';
+      lat = parts[1] || '—';
+    }
+
+    const dept = item.code_insee ? (depts[String(item.code_insee).substring(0,2)] || String(item.code_insee).substring(0,2)) : '—';
+
+    document.getElementById('td-nom-amenageur').textContent    = val(item,'nom_amenageur');
+    document.getElementById('td-siren').textContent            = val(item,'siren_amenageur');
+    document.getElementById('td-contact-amenageur').textContent= val(item,'contact_amenageur');
+    document.getElementById('td-nom-operateur').textContent    = val(item,'nom_operateur');
+    document.getElementById('td-contact-operateur').textContent= val(item,'contact_operateur');
+    document.getElementById('td-telephone').textContent        = val(item,'telephone_operateur');
+
+    document.getElementById('td-id-station').textContent  = val(item,'id_station_itinerance');
+    document.getElementById('td-nbre-pdc').textContent    = val(item,'nbre_pdc');
+    document.getElementById('td-type-prise').textContent  = val(item,'type_prise');
+    document.getElementById('td-puissance').textContent   = item.puissance_nominale ? item.puissance_nominale + ' kW' : '—';
+    document.getElementById('td-date').textContent        = val(item,'date_mise_en_service');
+    document.getElementById('td-acces').textContent       = val(item,'acces_recharge');
+
+    document.getElementById('td-commune').textContent     = val(item,'nom_commune');
+    document.getElementById('td-departement').textContent = dept;
+    document.getElementById('td-adresse').textContent     = val(item,'adresse_station');
+    document.getElementById('td-lat').textContent         = lat;
+    document.getElementById('td-lng').textContent         = lng;
+
+  } catch (err) {
+    console.error('Erreur chargement détail:', err);
+  }
+}
+
+async function searchAmenageur(e) {
+  e.preventDefault();
+  const query     = document.getElementById('search-input').value.trim();
+  const container = document.getElementById('search-results');
+
+  if (!query) { container.innerHTML = ''; return; }
+
+  container.innerHTML = '<p style="color:#aaa;font-size:14px;">Recherche en cours…</p>';
+
+  try {
+    const res   = await fetch('php/api.php?action=search&nom=' + encodeURIComponent(query));
+    const found = await res.json();
+
+    if (!found.length) {
+      container.innerHTML = `<p style="color:#e74c3c;font-size:14px;">Aucun aménageur trouvé pour « ${esc(query)} ».</p>`;
+      return;
+    }
+
+    const rows = found.map(a => `
+      <tr style="cursor:pointer;" onclick="show('detail',${a.id})">
+        <td style="padding:8px 12px;">${esc(a.nom_amenageur)}</td>
+        <td style="padding:8px 12px;">${esc(a.siren_amenageur)}</td>
+        <td style="padding:8px 12px;">${esc(a.contact_amenageur)}</td>
+        <td style="padding:8px 12px;">${esc(a.nom_operateur)}</td>
+        <td style="padding:8px 12px;">${esc(a.nom_commune)}</td>
+      </tr>`).join('');
+
+    container.innerHTML = `
+      <p style="font-size:13px;color:#aaa;font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">${found.length} résultat(s) — cliquez pour voir le détail</p>
+      <table class="detail-table" style="max-width:700px;width:100%;">
+        <thead>
+          <tr style="background:#f5f5f5;">
+            <th style="padding:8px 12px;text-align:left;">Nom aménageur</th>
+            <th style="padding:8px 12px;text-align:left;">Siren</th>
+            <th style="padding:8px 12px;text-align:left;">Contact</th>
+            <th style="padding:8px 12px;text-align:left;">Opérateur</th>
+            <th style="padding:8px 12px;text-align:left;">Commune</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  } catch (err) {
+    container.innerHTML = '<p style="color:#e74c3c;font-size:14px;">Erreur lors de la recherche.</p>';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadDetail);
 </script>
 </body>
 </html>

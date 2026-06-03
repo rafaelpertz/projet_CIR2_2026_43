@@ -6,12 +6,14 @@ const pages = {
   detail:       'breizh_detail.html'
 };
 
-function show(name) {
-  window.location.href = pages[name];
+function show(name, id) {
+  let url = pages[name];
+  if (id != null) url += '?id=' + id;
+  window.location.href = url;
 }
 
 (function () {
-  const current = window.location.pathname.split('/').pop();
+  const current = window.location.pathname.split('/').pop().split('?')[0];
   const pageMap = {
     'breizh_accueil.html':      'accueil',
     'breizh_liste.html':        'liste',

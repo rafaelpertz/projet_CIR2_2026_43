@@ -13,10 +13,10 @@
 <div id="demo-nav">
   <span>Back-End</span>
   <button class="demo-btn" data-page="accueil" onclick="show('accueil')">🏠 Accueil /back/</button>
-  <button class="demo-btn" data-page="liste" onclick="show('liste')">📋 Liste /back/liste</button>
   <button class="demo-btn" data-page="creation" onclick="show('creation')">➕ Création /back/create</button>
-  <button class="demo-btn" data-page="modification" onclick="show('modification')">✏️ Modification /back/edit/{id}</button>
+  <!-- <button class="demo-btn" data-page="modification" onclick="show('modification')">✏️ Modification /back/edit/{id}</button> -->
   <button class="demo-btn" data-page="detail" onclick="show('detail')">🔍 Détail /back/detail/{id}</button>
+  <button class="demo-btn" data-page="liste" onclick="show('liste')">📋 Liste /back/liste</button>
 </div>
 
 <div class="page-wrapper">
@@ -37,7 +37,7 @@
       <div class="list-header">
         <div>
           <div class="section-title" style="margin-bottom:6px;">Liste des installations</div>
-          <div class="list-count">4 821 enregistrements — affichage limité à 100</div>
+          <div class="list-count" id="liste-count">Chargement…</div>
         </div>
         <button class="btn btn-primary" onclick="show('creation')">+ Ajouter une installation</button>
       </div>
@@ -48,17 +48,10 @@
               <th>#</th><th>Aménageur</th><th>Opérateur</th><th>Commune</th><th>Nb PDC</th><th>Type prise</th><th>Puissance</th><th>Actions</th>
             </tr>
           </thead>
-          <tbody>
-            <tr><td>781</td><td>LE ROUX LOISIRS</td><td>freshmile</td><td>Rennes (35)</td><td>3</td><td>T2</td><td>22 kW</td><td class="actions-cell"><button class="btn btn-outline btn-sm" onclick="show('detail')">Voir</button><button class="btn btn-outline btn-sm" onclick="show('modification')">Éditer</button></td></tr>
-            <tr><td>867</td><td>R3</td><td>R3</td><td>Brest (29)</td><td>7</td><td>T3</td><td>50 kW</td><td class="actions-cell"><button class="btn btn-outline btn-sm" onclick="show('detail')">Voir</button><button class="btn btn-outline btn-sm" onclick="show('modification')">Éditer</button></td></tr>
-            <tr><td>1344</td><td>SARL Thouzeau LM</td><td>Evbox</td><td>Caen (14)</td><td>1</td><td>T2</td><td>7.4 kW</td><td class="actions-cell"><button class="btn btn-outline btn-sm" onclick="show('detail')">Voir</button><button class="btn btn-outline btn-sm" onclick="show('modification')">Éditer</button></td></tr>
-            <tr><td colspan="8" style="text-align:center;color:#ccc;padding:16px;font-style:italic;">… 97 autres enregistrements …</td></tr>
+          <tbody id="liste-tbody">
+            <tr><td colspan="8" style="text-align:center;color:#aaa;padding:24px;">Chargement des données…</td></tr>
           </tbody>
         </table>
-      </div>
-      <div class="pagination">
-        <div class="pnum active">1</div><div class="pnum">2</div><div class="pnum">3</div><div class="pnum">…</div><div class="pnum">97</div>
-        <span style="margin-left:auto;font-size:12px;color:#aaa;">1–50 sur 4 821</span>
       </div>
     </section>
   </main>
@@ -70,5 +63,44 @@
 </div>
 
 <script src="breizh_script.js"></script>
+<script>
+const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const tbody   = document.getElementById('liste-tbody');
+  const countEl = document.getElementById('liste-count');
+
+  try {
+    const res  = await fetch('php/api.php?action=liste');
+    const data = await res.json();
+
+    countEl.textContent = data.length + ' enregistrement(s) — affichage limité à 100';
+
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:24px;">Aucune donnée trouvée.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.map(row => `
+      <tr>
+        <td>${esc(row.id)}</td>
+        <td>${esc(row.nom_amenageur)}</td>
+        <td>${esc(row.nom_operateur)}</td>
+        <td>${esc(row.nom_commune)}</td>
+        <td>${esc(row.nbre_pdc)}</td>
+        <td>${esc(row.type_prise)}</td>
+        <td>${row.puissance_nominale ? esc(row.puissance_nominale) + ' kW' : '—'}</td>
+        <td class="actions-cell">
+          <button class="btn btn-outline btn-sm" onclick="show('detail',${row.id})">Voir</button>
+          <button class="btn btn-outline btn-sm" onclick="show('modification',${row.id})">Éditer</button>
+        </td>
+      </tr>`).join('');
+
+  } catch (err) {
+    tbody.innerHTML   = '<tr><td colspan="8" style="text-align:center;color:#e74c3c;padding:24px;">Erreur de connexion à la base de données.</td></tr>';
+    countEl.textContent = 'Erreur de chargement';
+  }
+});
+</script>
 </body>
 </html>

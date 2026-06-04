@@ -2,9 +2,4 @@
 
 //MOT DE PASSE VM : USER1 : isen2943
 
-// pour le back-end --> lier la bdd
-// pour le back-end --> proposition dans la visualisation de la liste des IRVE (avec un lien vers le détail de chaque IRVE)
-
-// vérifier qu'en ajoutant une adresse dans le back on peut la visualiser sur la carte du front-end (et que les coordonnées sont correctes)
-
-// vérifier que les modifications dans le back-end sont bien prises en compte dans le front-end (ex : changement de nom d'aménageur, ou de nombre de points de charge)
+//améliorer la page index du back

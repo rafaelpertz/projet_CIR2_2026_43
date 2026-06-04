@@ -19,7 +19,7 @@ $model = new IRVEModel();
 // Récupère l'id passé dans l'URL (ex: ?id=42), 0 si absent
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-// Récupère le terme de recherche passé dans l'URL (ex: ?nom=Rennes)
+// Récupère le terme de recherche passé dans l'URL (ex: ?nom=R3)
 $recherche = trim($_GET['nom'] ?? '');
 
 // Charge le détail si un id est fourni
@@ -35,11 +35,6 @@ $depts = [
     '35' => '35 – Ille-et-Vilaine',
     '56' => '56 – Morbihan',
 ];
-
-// Fonction utilitaire : échappe les caractères spéciaux HTML (anti-XSS)
-function e($valeur): string {
-    return htmlspecialchars((string)($valeur ?? ''), ENT_QUOTES, 'UTF-8');
-}
 
 // Extrait le département depuis le code INSEE (2 premiers chiffres)
 $dept = '—';
@@ -105,7 +100,7 @@ if ($item && !empty($item['coordonneesXY'])) {
           <input
             type="text"
             name="nom"
-            value="<?= e($recherche) ?>"
+            value="<?= $recherche ?? '' ?>"
             placeholder="Rechercher par nom d'aménageur…"
             style="flex:1;min-width:220px;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;outline:none;"
           />
@@ -116,7 +111,7 @@ if ($item && !empty($item['coordonneesXY'])) {
         <?php if ($recherche !== ''): ?>
           <?php if (empty($resultats_recherche)): ?>
             <p style="color:#e74c3c;font-size:14px;margin-top:16px;">
-              Aucun aménageur trouvé pour « <?= e($recherche) ?> ».
+              Aucun aménageur trouvé pour « <?= $recherche ?? '' ?> ».
             </p>
           <?php else: ?>
             <p style="font-size:13px;color:#aaa;font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px;">
@@ -135,12 +130,12 @@ if ($item && !empty($item['coordonneesXY'])) {
               <tbody>
                 <?php foreach ($resultats_recherche as $r): ?>
                   <!-- Chaque ligne est un lien vers le détail de l'installation -->
-                  <tr style="cursor:pointer;" onclick="window.location='breizh_detail.php?id=<?= e($r['id']) ?>'">
-                    <td style="padding:8px 12px;"><?= e($r['nom_amenageur']) ?></td>
-                    <td style="padding:8px 12px;"><?= e($r['siren_amenageur']) ?></td>
-                    <td style="padding:8px 12px;"><?= e($r['contact_amenageur']) ?></td>
-                    <td style="padding:8px 12px;"><?= e($r['nom_operateur']) ?></td>
-                    <td style="padding:8px 12px;"><?= e($r['nom_commune']) ?></td>
+                  <tr style="cursor:pointer;" onclick="window.location='breizh_detail.php?id=<?= $r['id'] ?? '' ?>'">
+                    <td style="padding:8px 12px;"><?= $r['nom_amenageur'] ?? '' ?></td>
+                    <td style="padding:8px 12px;"><?= $r['siren_amenageur'] ?? '' ?></td>
+                    <td style="padding:8px 12px;"><?= $r['contact_amenageur'] ?? '' ?></td>
+                    <td style="padding:8px 12px;"><?= $r['nom_operateur'] ?? '' ?></td>
+                    <td style="padding:8px 12px;"><?= $r['nom_commune'] ?? '' ?></td>
                   </tr>
                 <?php endforeach; ?>
               </tbody>
@@ -158,43 +153,43 @@ if ($item && !empty($item['coordonneesXY'])) {
 
           <p style="font-size:13px;color:#aaa;margin-bottom:20px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;">Aménageur &amp; Opérateur</p>
           <table class="detail-table">
-            <tr><th>Nom aménageur</th>    <td><?= e($item['nom_amenageur']) ?></td></tr>
-            <tr><th>Siren</th>            <td><?= e($item['siren_amenageur']) ?></td></tr>
-            <tr><th>Contact aménageur</th><td><?= e($item['contact_amenageur']) ?></td></tr>
-            <tr><th>Nom opérateur</th>    <td><?= e($item['nom_operateur']) ?></td></tr>
-            <tr><th>Contact opérateur</th><td><?= e($item['contact_operateur']) ?></td></tr>
-            <tr><th>Téléphone</th>        <td><?= e($item['telephone_operateur']) ?></td></tr>
+            <tr><th>Nom aménageur</th>    <td><?= $item['nom_amenageur'] ?? '' ?></td></tr>
+            <tr><th>Siren</th>            <td><?= $item['siren_amenageur'] ?? '' ?></td></tr>
+            <tr><th>Contact aménageur</th><td><?= $item['contact_amenageur'] ?? '' ?></td></tr>
+            <tr><th>Nom opérateur</th>    <td><?= $item['nom_operateur'] ?? '' ?></td></tr>
+            <tr><th>Contact opérateur</th><td><?= $item['contact_operateur'] ?? '' ?></td></tr>
+            <tr><th>Téléphone</th>        <td><?= $item['telephone_operateur'] ?? '' ?></td></tr>
           </table>
 
           <p style="font-size:13px;color:#aaa;margin:24px 0 12px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;">Installation</p>
           <table class="detail-table">
-            <tr><th>ID station</th>          <td><?= e($item['id_station_itinerance']) ?></td></tr>
-            <tr><th>Nombre de PDC</th>       <td><?= e($item['nbre_pdc']) ?></td></tr>
-            <tr><th>Type de prise</th>       <td><?= e($item['type_prise']) ?></td></tr>
-            <tr><th>Puissance nominale</th>  <td><?= $item['puissance_nominale'] ? e($item['puissance_nominale']) . ' kW' : '—' ?></td></tr>
-            <tr><th>Date mise en service</th><td><?= e($item['date_mise_en_service']) ?></td></tr>
-            <tr><th>Accès</th>              <td><?= e($item['acces_recharge']) ?></td></tr>
+            <tr><th>ID station</th>          <td><?= $item['id_station_itinerance'] ?? '' ?></td></tr>
+            <tr><th>Nombre de PDC</th>       <td><?= $item['nbre_pdc'] ?? '' ?></td></tr>
+            <tr><th>Type de prise</th>       <td><?= $item['type_prise'] ?? '' ?></td></tr>
+            <tr><th>Puissance nominale</th>  <td><?= $item['puissance_nominale'] ? ($item['puissance_nominale'] ?? '') . ' kW' : '—' ?></td></tr>
+            <tr><th>Date mise en service</th><td><?= $item['date_mise_en_service'] ?? '' ?></td></tr>
+            <tr><th>Accès</th>              <td><?= $item['acces_recharge'] ?? '' ?></td></tr>
           </table>
 
           <p style="font-size:13px;color:#aaa;margin:24px 0 12px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;">Localisation</p>
           <table class="detail-table">
-            <tr><th>Commune</th>    <td><?= e($item['nom_commune']) ?></td></tr>
-            <tr><th>Département</th><td><?= e($dept) ?></td></tr>
-            <tr><th>Adresse</th>    <td><?= e($item['adresse_station']) ?></td></tr>
-            <tr><th>Latitude</th>   <td><?= e($lat) ?></td></tr>
-            <tr><th>Longitude</th>  <td><?= e($lng) ?></td></tr>
+            <tr><th>Commune</th>    <td><?= $item['nom_commune'] ?? '' ?></td></tr>
+            <tr><th>Département</th><td><?= $dept ?? '' ?></td></tr>
+            <tr><th>Adresse</th>    <td><?= $item['adresse_station'] ?? '' ?></td></tr>
+            <tr><th>Latitude</th>   <td><?= $lat ?? '' ?></td></tr>
+            <tr><th>Longitude</th>  <td><?= $lng ?? '' ?></td></tr>
           </table>
 
           <br>
           <div style="display:flex;gap:10px;align-items:flex-start;">
             <!-- Lien vers la page de modification avec l'id en paramètre -->
-            <a class="btn btn-primary" href="breizh_modification.php?id=<?= e($id) ?>">✏️ Modifier</a>
+            <a class="btn btn-primary" href="breizh_modification.php?id=<?= $id ?>">✏️ Modifier</a>
             <a class="btn btn-outline" href="breizh_liste.php">← Retour</a>
           </div>
 
         <?php elseif ($id > 0): ?>
           <!-- L'id fourni ne correspond à aucun enregistrement -->
-          <p style="color:#e74c3c;">Aucune installation trouvée pour l'identifiant <?= e($id) ?>.</p>
+          <p style="color:#e74c3c;">Aucune installation trouvée pour l'identifiant <?= $id ?>.</p>
         <?php else: ?>
           <!-- Aucun id dans l'URL : inviter l'utilisateur à chercher -->
           <p style="color:#aaa;font-size:14px;">Utilisez la recherche ci-dessus ou accédez via la liste.</p>

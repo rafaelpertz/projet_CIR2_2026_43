@@ -1,32 +1,77 @@
-/* ===== BASE ===== */
+/*
+ * breizh_style.css — Feuille de style commune à toutes les pages back-office
+ * ===========================================================================
+ * Utilisée par : index.php, breizh_liste.php, breizh_detail.php,
+ *                breizh_creation.php, breizh_modification.php
+ *
+ * Structure :
+ *   BASE · DEMO NAV · PAGE WRAPPER · HEADER · MAIN · HERO · SECTION
+ *   TABLE · BUTTONS · FORM · DETAIL VIEW · LIST PAGE · PAGINATION
+ *   URL HINT · ALERT · FOOTER
+ *
+ * Palettes :
+ *   Fond clair   : #f5f4f2
+ *   Texte        : #1a1a1a
+ *   Accent       : #e8845a  (orange Breizh Ohm)
+ *   Bordures     : #e0ddd8
+ */
+
+/* ===== BASE =====
+   Reset global : supprime les marges/paddings par défaut du navigateur.
+   box-sizing: border-box garantit que padding et border sont inclus
+   dans la largeur/hauteur déclarée — simplifie tous les calculs de layout. */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Styles de base du body : police, fond beige clair, hauteur minimale plein écran */
 body { font-family: 'Inter', sans-serif; background: #f5f4f2; color: #1a1a1a; min-height: 100vh; }
-/* Force tous les éléments de formulaire à hériter la police du body */
+
+/* Tous les éléments interactifs héritent la police du body
+   (les navigateurs appliquent leur propre police par défaut aux inputs/buttons) */
 button, input, select, textarea, a { font-family: inherit; }
 
-/* ===== DEMO NAV ===== */
+
+/* ===== DEMO NAV =====
+   Barre de navigation fixe en haut de page permettant de passer
+   d'une vue à l'autre pendant la démonstration.
+   z-index: 9999 assure qu'elle reste au-dessus de tous les autres éléments. */
 #demo-nav {
   position: fixed; top: 0; left: 0; width: 100%; z-index: 9999;
   background: #fff; border-bottom: 1px solid #e0ddd8;
   padding: 8px 20px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
 }
-#demo-nav span { font-size: 10px; font-weight: 600; color: #e8845a; letter-spacing: 1.5px; text-transform: uppercase; margin-right: 6px; }
+
+/* Label "Back-End" en majuscules à gauche de la barre */
+#demo-nav span {
+  font-size: 10px; font-weight: 600; color: #e8845a;
+  letter-spacing: 1.5px; text-transform: uppercase; margin-right: 6px;
+}
+
+/* Boutons de navigation de la demo — apparence de pill (pilule arrondie) */
 .demo-btn {
   background: #f5f4f2; color: #555; border: 1px solid #ddd;
-  padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 11px; font-family: 'Inter', sans-serif;
+  padding: 4px 12px; border-radius: 20px; cursor: pointer;
+  font-size: 11px; font-family: 'Inter', sans-serif;
   transition: all 0.2s; text-decoration-line: none;
 }
-.demo-btn:hover { background: #e8845a; color: #fff; border-color: #e8845a; }
+.demo-btn:hover  { background: #e8845a; color: #fff; border-color: #e8845a; }
+/* La page courante est mise en surbrillance avec la couleur accent */
 .demo-btn.active { background: #e8845a; color: #fff; border-color: #e8845a; }
-/* Permet d'utiliser <a class="..."> comme liens-boutons sans soulignement */
+
+/* Supprime le soulignement par défaut des <a> utilisés comme boutons */
 a.demo-btn { text-decoration: none; display: inline-block; }
 a.btn      { text-decoration: none; }
 a.btn-hero { text-decoration: none; display: inline-block; text-align: center; }
 
-/* ===== PAGE WRAPPER ===== */
+
+/* ===== PAGE WRAPPER =====
+   Conteneur flex colonne pour toutes les pages : header + main + footer.
+   padding-top: 42px compense la hauteur de la barre #demo-nav fixe
+   (environ 40px) afin que le contenu ne soit pas masqué dessous. */
 .page-wrapper { display: flex; flex-direction: column; min-height: 100vh; padding-top: 42px; }
 
-/* ===== HEADER ===== */
+
+/* ===== HEADER =====
+   Barre de navigation principale avec logo à gauche et liens à droite. */
 header {
   background: #fff;
   border-bottom: 1px solid #e0ddd8;
@@ -34,25 +79,37 @@ header {
   display: flex; align-items: center; justify-content: space-between;
   height: 56px;
 }
+
+/* Groupe logo + nom de la marque */
 .header-brand { display: flex; align-items: center; gap: 10px; }
-.header-logo {
-  width: 40px; height: 40px;
-  overflow: hidden;
-}
+
+/* Conteneur carré pour le logo — object-fit: contain préserve les proportions */
+.header-logo  { width: 40px; height: 40px; overflow: hidden; }
 .header-logo img { width: 100%; height: 100%; object-fit: contain; }
+
+/* Nom de la marque en serif pour contraster avec le reste de l'interface */
 .brand-name { font-family: 'Playfair Display', serif; font-size: 18px; color: #1a1a1a; }
+
+/* Liens de navigation — style pill avec état hover et active */
 nav { display: flex; gap: 2px; }
 nav a {
   color: #888; text-decoration: none; padding: 6px 14px;
   border-radius: 20px; font-size: 13px; cursor: pointer; transition: all 0.2s;
 }
-nav a:hover { color: #1a1a1a; background: #f0eeeb; }
+nav a:hover  { color: #1a1a1a; background: #f0eeeb; }
 nav a.active { color: #fff; background: #e8845a; }
 
-/* ===== MAIN ===== */
+
+/* ===== MAIN =====
+   Zone de contenu principale. flex: 1 lui permet d'occuper
+   tout l'espace vertical disponible et colle le footer en bas. */
 main { flex: 1; }
 
-/* ===== HERO ===== */
+
+/* ===== HERO =====
+   Bandeau hero pleine largeur sur la page d'accueil.
+   Le dégradé linéaire crée un fond pastel tricolore (saumon → vert sauge → beige).
+   ::before ajoute un reflet lumineux radial au-dessus du dégradé. */
 .hero {
   position: relative; overflow: hidden;
   background: linear-gradient(135deg, #f9c5a8 0%, #b5d5c5 50%, #e8d5c4 100%);
@@ -60,11 +117,16 @@ main { flex: 1; }
   display: flex; align-items: center; justify-content: center;
   text-align: center; padding: 60px 40px;
 }
+
+/* Reflet lumineux centré — pseudo-élément invisible au clic (pointer-events hérités) */
 .hero::before {
   content: '';
   position: absolute; inset: 0;
   background: radial-gradient(ellipse 60% 80% at 60% 40%, rgba(255,255,255,0.35) 0%, transparent 70%);
 }
+
+/* Sphère décorative "en verre" positionnée à droite du hero.
+   Le dégradé radial simule un éclairage depuis le coin supérieur gauche. */
 .hero-sphere {
   position: absolute; right: 18%; top: 50%; transform: translateY(-50%);
   width: 160px; height: 160px; border-radius: 50%;
@@ -72,13 +134,20 @@ main { flex: 1; }
   box-shadow: inset -15px -15px 30px rgba(0,0,0,0.08), 0 20px 60px rgba(0,0,0,0.12);
   opacity: 0.85;
 }
+
+/* Contenu textuel du hero — z-index: 1 pour passer au-dessus du ::before */
 .hero-content { position: relative; z-index: 1; max-width: 560px; }
+
+/* clamp() permet un titre responsive : min 28px, idéal 5vw, max 44px */
 .hero-content h1 {
   font-family: 'Playfair Display', serif;
   font-size: clamp(28px, 5vw, 44px);
   line-height: 1.2; color: #1a1a1a; margin-bottom: 32px;
 }
+
 .hero-btns { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+/* Boutons hero style "verre dépoli" — backdrop-filter flou l'arrière-plan */
 .btn-hero {
   background: rgba(255,255,255,0.45); backdrop-filter: blur(8px);
   border: 1px solid rgba(255,255,255,0.6); color: #1a1a1a;
@@ -87,64 +156,117 @@ main { flex: 1; }
 }
 .btn-hero:hover { background: rgba(255,255,255,0.75); }
 
-/* ===== SECTION ===== */
+
+/* ===== SECTION =====
+   Zones de contenu à l'intérieur de <main>.
+   section + section ajoute un séparateur horizontal entre deux sections. */
 section { padding: 52px 60px; }
 section + section { border-top: 1px solid #e0ddd8; }
+
+/* Titre de section — clamp pour responsive, max-width pour éviter les longues lignes */
 .section-title {
   font-family: 'Playfair Display', serif;
   font-size: clamp(24px, 4vw, 38px);
   line-height: 1.2; color: #1a1a1a; margin-bottom: 32px;
   max-width: 260px;
 }
+
+/* Mise en page à deux colonnes : titre (260px fixe) + zone de contenu (1fr) */
 .section-layout { display: grid; grid-template-columns: 260px 1fr; gap: 48px; align-items: start; }
 
-/* ===== TABLE ===== */
+
+/* ===== TABLE =====
+   Tableau de données générique (page liste).
+   overflow-x: auto sur le wrapper permet le défilement horizontal sur petits écrans. */
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+/* En-têtes : fond orange clair pour distinguer les colonnes du contenu */
 thead th {
   background: #f4b49a; color: #1a1a1a;
   padding: 11px 16px; text-align: left; font-weight: 500;
   border: 1px solid #f0a888;
 }
+
+/* Cellules de données : fond blanc avec bordure fine */
 tbody td {
   padding: 10px 16px; border: 1px solid #e8e4de;
   background: #fff; color: #333;
 }
+/* Légère surbrillance au survol d'une ligne */
 tbody tr:hover td { background: #faf9f7; }
+
+/* Cellule d'actions : affiche les boutons côte à côte */
 .actions-cell { display: flex; gap: 6px; }
 
-/* ===== BUTTONS ===== */
-.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 20px; border-radius: 24px; font-size: 13px; cursor: pointer; border: none; font-family: 'Inter', sans-serif; transition: all 0.2s; text-decoration: none; }
-.btn-primary { background: #e8845a; color: #fff; }
+
+/* ===== BUTTONS =====
+   Composant bouton réutilisable dans toute l'interface.
+   Deux variantes : plein (btn-primary) et contour (btn-outline).
+   Taille réduite disponible via btn-sm. */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 20px; border-radius: 24px; font-size: 13px;
+  cursor: pointer; border: none; font-family: 'Inter', sans-serif;
+  transition: all 0.2s; text-decoration: none;
+}
+/* Bouton principal — fond accent orange */
+.btn-primary       { background: #e8845a; color: #fff; }
 .btn-primary:hover { background: #d4734a; }
-.btn-outline { background: transparent; border: 1px solid #ccc; color: #555; }
+
+/* Bouton secondaire — contour gris, hover orange */
+.btn-outline       { background: transparent; border: 1px solid #ccc; color: #555; }
 .btn-outline:hover { border-color: #e8845a; color: #e8845a; }
+
+/* Variante compacte pour les tableaux */
 .btn-sm { padding: 5px 14px; font-size: 12px; }
 
-/* ===== FORM ===== */
-.form-wrap { max-width: 520px; }
+
+/* ===== FORM =====
+   Styles des formulaires de création et modification.
+   .form-wrap limite la largeur du formulaire pour la lisibilité.
+   .form-row affiche deux champs côte à côte sur une grille 2 colonnes. */
+.form-wrap  { max-width: 520px; }
 .form-group { margin-bottom: 18px; }
-label { display: block; font-size: 12px; color: #888; margin-bottom: 6px; }
-.req { color: #e8845a; }
-input[type=text], input[type=email], input[type=number], input[type=date], select, textarea {
+label       { display: block; font-size: 12px; color: #888; margin-bottom: 6px; }
+.req        { color: #e8845a; } /* Astérisque rouge sur les champs obligatoires */
+
+/* Tous les champs de saisie partagent le même style de base */
+input[type=text],
+input[type=email],
+input[type=number],
+input[type=date],
+select,
+textarea {
   width: 100%; background: #fff; border: 1px solid #ddd;
   border-radius: 4px; padding: 9px 12px; font-size: 13px;
   font-family: 'Inter', sans-serif; color: #1a1a1a; transition: border-color 0.2s;
 }
+/* Contour accent au focus pour indiquer le champ actif */
 input:focus, select:focus, textarea:focus { outline: none; border-color: #e8845a; }
 input::placeholder, textarea::placeholder { color: #bbb; }
+
+/* Textarea redimensionnable verticalement uniquement (pas horizontalement) */
 textarea { resize: vertical; min-height: 90px; }
+
+/* Grille 2 colonnes pour grouper des champs en paires */
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* Composant étoiles de notation (non utilisé dans ce back-office) */
 .stars { display: flex; gap: 8px; margin-top: 6px; }
-.star { font-size: 20px; color: #ccc; cursor: pointer; }
+.star  { font-size: 20px; color: #ccc; cursor: pointer; }
 .star:hover { color: #e8845a; }
+
+/* Groupe de cases à cocher avec fond grisé */
 .checkbox-group { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
-.checkbox-item {
+.checkbox-item  {
   display: flex; align-items: center; gap: 10px;
   background: #f0eeeb; border-radius: 6px; padding: 10px 14px;
   font-size: 13px; color: #444; cursor: pointer;
 }
-.checkbox-item input { width: auto; }
+.checkbox-item input { width: auto; } /* Évite que l'input checkbox prenne 100% de largeur */
+
+/* Bouton de soumission alternatif pleine largeur */
 .btn-submit {
   width: 100%; background: #e8845a; color: #fff;
   border: none; border-radius: 6px; padding: 13px;
@@ -152,50 +274,78 @@ textarea { resize: vertical; min-height: 90px; }
   font-family: 'Inter', sans-serif; transition: background 0.2s; margin-top: 8px;
 }
 .btn-submit:hover { background: #d4734a; }
-.form-note { text-align: center; font-size: 11px; color: #aaa; margin-top: 8px; }
+.form-note    { text-align: center; font-size: 11px; color: #aaa; margin-top: 8px; }
+
+/* Zone d'actions du formulaire : boutons alignés à droite */
 .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
 
-/* ===== DETAIL VIEW ===== */
+
+/* ===== DETAIL VIEW =====
+   Tableau clé/valeur utilisé sur breizh_detail.php.
+   Les <th> servent de libellés (colonne gauche, 40% de largeur),
+   les <td> affichent les valeurs (colonne droite). */
 .detail-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .detail-table th {
   background: #f0eeeb; color: #888; font-weight: 500;
   padding: 10px 16px; text-align: left; border-bottom: 1px solid #e0ddd8;
-  width: 40%; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+  width: 40%; /* Largeur fixe pour aligner les valeurs à droite */
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;
 }
 .detail-table td { padding: 10px 16px; border-bottom: 1px solid #e8e4de; color: #1a1a1a; }
 
-/* ===== LIST PAGE ===== */
-.list-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; }
-.list-count { font-size: 13px; color: #888; }
 
-/* ===== PAGINATION ===== */
+/* ===== LIST PAGE =====
+   En-tête de la page liste : titre à gauche, bouton "Ajouter" à droite. */
+.list-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; }
+.list-count  { font-size: 13px; color: #888; } /* Affiche le nombre d'éléments */
+
+
+/* ===== PAGINATION =====
+   Barre de pagination numérotée (non utilisée actuellement dans ce back-office,
+   la liste est limitée à 100 éléments côté serveur). */
 .pagination { display: flex; gap: 4px; margin-top: 20px; align-items: center; }
-.pnum { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 12px; cursor: pointer; color: #888; }
-.pnum:hover { background: #f0eeeb; }
+.pnum {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; font-size: 12px; cursor: pointer; color: #888;
+}
+.pnum:hover  { background: #f0eeeb; }
 .pnum.active { background: #e8845a; color: #fff; }
 
-/* ===== URL HINT ===== */
-.url-hint { font-size: 11px; color: #bbb; font-family: monospace; margin-bottom: 28px; }
-.url-hint strong { color: #e8845a; }
 
-/* ===== ALERT ===== */
-.alert { padding: 12px 16px; border-radius: 6px; font-size: 13px; margin-bottom: 20px; border-left: 3px solid; }
+/* ===== URL HINT =====
+   Petit indicateur d'URL en police monospace pour afficher
+   les paramètres GET attendus par une page (ex : ?id=42). */
+.url-hint        { font-size: 11px; color: #bbb; font-family: monospace; margin-bottom: 28px; }
+.url-hint strong { color: #e8845a; } /* Met en valeur le nom du paramètre */
+
+
+/* ===== ALERT =====
+   Boîte d'alerte générique avec bordure gauche colorée.
+   alert-warn : avertissement (fond orange pâle, bordure accent). */
+.alert      { padding: 12px 16px; border-radius: 6px; font-size: 13px; margin-bottom: 20px; border-left: 3px solid; }
 .alert-warn { background: #fff5f0; border-color: #e8845a; color: #a04020; }
 
-/* ===== FOOTER ===== */
+
+/* ===== FOOTER =====
+   Pied de page sombre avec informations du projet.
+   Le fond #1a1a1a contraste volontairement avec le fond clair du reste. */
 footer {
   background: #1a1a1a; color: #888;
   padding: 24px 40px;
   display: flex; align-items: center; justify-content: space-between;
   font-size: 12px;
 }
+
+/* Logo + nom en bas à gauche */
 .footer-brand { display: flex; align-items: center; gap: 12px; }
-.footer-logo {
-  width: 44px; height: 44px;
-  overflow: hidden;
-}
+.footer-logo  { width: 44px; height: 44px; overflow: hidden; }
 .footer-logo img { width: 100%; height: 100%; object-fit: contain; }
+
+/* Nom de la marque en blanc pour le contraste sur fond noir */
 .footer-name { color: #fff; font-family: 'Playfair Display', serif; font-size: 16px; }
-.footer-meta { text-align: right; }
-.footer-meta p { color: #666; }
-.footer-meta p:first-child { color: #aaa; }
+
+/* Infos auteurs alignées à droite */
+.footer-meta            { text-align: right; }
+.footer-meta p          { color: #666; }
+.footer-meta p:first-child { color: #aaa; } /* Première ligne légèrement plus claire */

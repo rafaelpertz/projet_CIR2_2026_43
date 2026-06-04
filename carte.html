@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BreizhOhm – Carte</title>
+<link rel="stylesheet" href="assets/breizh-charge.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="assets/script.js" defer></script>
+</head>
+<body data-page="carte">
+
+<!-- entête -->
+<nav>
+  <div class="logo">
+    <a href="index.html" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
+      <div class="logo-icon">
+        <img id="nav-logo" src="assets/logo_breizh_charge_groupe43_v2.png" alt="Logo BreizhOhm">
+      </div>
+      <div class="logo-text">
+        <h2>Breizh<br>Ohm</h2>
+        <p>Points de recharge électrique en Bretagne</p>
+      </div>
+    </a>
+  </div>
+  <ul>
+    <li><a href="index.html">Accueil</a></li>
+    <li><a href="recherche.html">Recherche</a></li>
+    <li><a href="carte.html" class="active">Carte</a></li>
+  </ul>
+  <a class="nav-cta" href="recherche.html">TROUVER UNE BORNE</a>
+</nav>
+
+<!-- carte -->
+
+<div class="search-hero">
+  <div class="search-hero-content">
+    <h1>Carte des bornes de recharge</h1>
+    <p>Visualisez la répartition géographique des bornes en Bretagne.
+       Filtrez par année d'installation et par département.</p>
+  </div>
+</div>
+
+<!-- Formulaire carte -->
+<section class="criteria-section">
+  <h2 style="margin-bottom:24px;">Filtrer l'affichage :</h2>
+  <div class="search-form">
+    <div class="form-field">
+      <label for="carte-nom">Nom de la station</label>
+      <input type="text" id="carte-nom" placeholder="ex : Leclerc, parking…">
+    </div>
+    <div class="form-field">
+      <label for="carte-annee">Année d'installation</label>
+      <select id="carte-annee">
+        <option value="">— Toutes —</option>
+        <option value="2014">2014</option>
+        <option value="2015">2015</option>
+        <option value="2016">2016</option>
+        <option value="2017">2017</option>
+        <option value="2018">2018</option>
+        <option value="2019">2019</option>
+        <option value="2020">2020</option>
+        <option value="2021">2021</option>
+        <option value="2022">2022</option>
+        <option value="2023">2023</option>
+        <option value="2024">2024</option>
+        <option value="2025">2025</option>
+        <option value="2026">2026</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <label for="carte-dept">Département</label>
+      <select id="carte-dept">
+        <option value="">— Tous —</option>
+        <option value="29">29 – Finistère</option>
+        <option value="22">22 – Côtes-d'Armor</option>
+        <option value="56">56 – Morbihan</option>
+        <option value="35">35 – Ille-et-Vilaine</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <label for="carte-prise">Type de prise</label>
+      <select id="carte-prise">
+        <option value="">— Tous —</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <label for="carte-amenageur">Aménageur</label>
+      <select id="carte-amenageur">
+        <option value="">— Tous —</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <label for="carte-puissance-min">Puissance min (kW)</label>
+      <input type="number" id="carte-puissance-min" min="0" step="1" placeholder="ex : 50">
+    </div>
+
+    <button class="validate-btn" onclick="afficherCarte()">AFFICHER</button>
+  </div>
+</section>
+
+<!-- Carte Leaflet-->
+<section class="map-section">
+  <div class="map-header">
+    <h2>Bornes affichées :</h2>
+    <p>Cliquez sur un marqueur pour voir les informations et accéder au détail.</p>
+    <div class="result-count" id="carte-count">—</div>
+  </div>
+  <div class="map-container" id="carte-leaflet-container"></div>
+</section>
+
+<!-- footer -->
+<footer>
+  <p>© 2026 <span>BreizhOhm</span> — Rafael Touzé & Florian Muller — Groupe 13 · CIR2 2026 · ISEN Ouest</p>
+</footer>
+
+</body>
+</html>

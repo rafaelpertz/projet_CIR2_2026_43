@@ -3,8 +3,8 @@
 // Configuration de la base de données
 // ============================================================
 define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_USER', 'breizhohm');
+define('DB_PASS', 'breizhohm');
 define('DB_NAME', 'breizhohm');
 
 function getDB(): PDO {

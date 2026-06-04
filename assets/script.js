@@ -23,8 +23,9 @@ let carteLeaflet = null;      // Instance Leaflet (page carte)
 let detailMapLeaflet = null;  // Instance Leaflet (page détail)
 
 /**
- * Affiche la page demandée et cache les autres.
- * @param {string} name - Identifiant de la page (home, search, detail, carte)
+ * Bascule entre les sous-vues d'une même page HTML (ex: search ↔ detail).
+ * La navigation inter-pages se fait via des liens <a href>.
+ * @param {string} name - Identifiant de la vue (search, detail)
  */
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -33,21 +34,34 @@ function showPage(name) {
     target.classList.add('active');
     window.scrollTo(0, 0);
   }
-
-  // Initialiser la carte Leaflet au premier affichage
-  if (name === 'carte' && !carteLeaflet) {
-    initCarteLeaflet();
-  }
 }
 
 /* ============================================================
    INITIALISATION AU CHARGEMENT DE LA PAGE
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
-  buildYearChart();
-  buildDeptChart();
-  buildCrossTable();
-  chargerFiltresRecherche();
+  const page = document.body.dataset.page;
+
+  if (page === 'home') {
+    buildYearChart();
+    buildDeptChart();
+    buildCrossTable();
+  }
+
+  if (page === 'recherche') {
+    chargerFiltresRecherche();
+    // Si on arrive depuis la carte avec ?detail=id, afficher directement le détail
+    const params = new URLSearchParams(window.location.search);
+    const detailId = params.get('detail');
+    if (detailId) {
+      afficherDetail(parseInt(detailId));
+    }
+  }
+
+  if (page === 'carte') {
+    chargerFiltresCarte();
+    initCarteLeaflet();
+  }
 });
 
 /* ============================================================
@@ -157,16 +171,22 @@ function buildCrossTable() {
    ============================================================ */
 
 /**
- * Charge les options des selects du formulaire de recherche via l'API REST.
- * Routes attendues :
- *   GET /api/amenageurs?limit=20&random=1   → [{id, nom_amenageur}, ...]
- *   GET /api/types-prise                    → [{id, libelle}, ...]
- *   GET /api/departements                   → [{code, nom}, ...]
+ * Charge les options des selects du formulaire de recherche (recherche.html).
  */
 async function chargerFiltresRecherche() {
   await chargerSelect('sel-amenageur', `${API_BASE}/amenageurs?limit=20&random=1`, 'nom_amenageur', 'id');
-  await chargerSelect('sel-prise',     `${API_BASE}/types-prise`,                  'libelle',        'id');
-  await chargerSelect('sel-dept',      `${API_BASE}/departements`,                 'nom',            'code');
+  await chargerSelect('sel-operateur', `${API_BASE}/operateurs`,                   'nom',           'id');
+  await chargerSelect('sel-prise',     `${API_BASE}/types-prise`,                  'libelle',       'id');
+  await chargerSelect('sel-dept',      `${API_BASE}/departements`,                 'nom',           'code');
+  await chargerSelect('sel-acces',     `${API_BASE}/conditions-acces`,             'libelle',       'id');
+}
+
+/**
+ * Charge les options des selects du formulaire de la carte (carte.html).
+ */
+async function chargerFiltresCarte() {
+  await chargerSelect('carte-prise',     `${API_BASE}/types-prise`,                  'libelle',       'id');
+  await chargerSelect('carte-amenageur', `${API_BASE}/amenageurs?limit=20&random=1`, 'nom_amenageur', 'id');
 }
 
 /**
@@ -210,14 +230,24 @@ async function chargerSelect(selectId, url, labelKey, valueKey) {
  * Route : GET /api/installations?amenageur=&prise=&dept=
  */
 async function lancerRecherche() {
-  const amenageur = document.getElementById('sel-amenageur').value;
-  const prise     = document.getElementById('sel-prise').value;
-  const dept      = document.getElementById('sel-dept').value;
+  const nom          = document.getElementById('sel-nom').value.trim();
+  const amenageur    = document.getElementById('sel-amenageur').value;
+  const operateur    = document.getElementById('sel-operateur').value;
+  const prise        = document.getElementById('sel-prise').value;
+  const dept         = document.getElementById('sel-dept').value;
+  const puissanceMin = document.getElementById('sel-puissance-min').value;
+  const acces        = document.getElementById('sel-acces').value;
+  const gratuit      = document.getElementById('sel-gratuit').value;
 
   const params = new URLSearchParams();
-  if (amenageur) params.append('amenageur', amenageur);
-  if (prise)     params.append('prise', prise);
-  if (dept)      params.append('dept', dept);
+  if (nom)          params.append('nom', nom);
+  if (amenageur)    params.append('amenageur', amenageur);
+  if (operateur)    params.append('operateur', operateur);
+  if (prise)        params.append('prise', prise);
+  if (dept)         params.append('dept', dept);
+  if (puissanceMin) params.append('puissance_min', puissanceMin);
+  if (acces)        params.append('acces', acces);
+  if (gratuit !== '') params.append('gratuit', gratuit);
 
   const url = `${API_BASE}/installations?${params.toString()}`;
 
@@ -384,17 +414,26 @@ function initCarteLeaflet() {
 async function afficherCarte() {
   if (!carteLeaflet) initCarteLeaflet();
 
-  const annee = document.getElementById('carte-annee').value;
-  const dept  = document.getElementById('carte-dept').value;
+  const nom         = document.getElementById('carte-nom').value.trim();
+  const annee       = document.getElementById('carte-annee').value;
+  const dept        = document.getElementById('carte-dept').value;
+  const prise       = document.getElementById('carte-prise').value;
+  const amenageur   = document.getElementById('carte-amenageur').value;
+  const puissanceMin = document.getElementById('carte-puissance-min').value;
 
   const params = new URLSearchParams();
-  if (annee) params.append('annee', annee);
-  if (dept)  params.append('dept', dept);
+  if (nom)          params.append('nom', nom);
+  if (annee)        params.append('annee', annee);
+  if (dept)         params.append('dept', dept);
+  if (prise)        params.append('prise', prise);
+  if (amenageur)    params.append('amenageur', amenageur);
+  if (puissanceMin) params.append('puissance_min', puissanceMin);
 
   try {
     const reponse = await fetch(`${API_BASE}/installations/carte?${params.toString()}`);
     if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
     const points = await reponse.json();
+    console.log(points)
     afficherMarqueurs(points);
   } catch (err) {
     console.error('Erreur chargement carte :', err);
@@ -416,20 +455,22 @@ function afficherMarqueurs(points) {
   }
 
   document.getElementById('carte-count').textContent = points.length;
+  console.log(points)
 
   points.forEach(pt => {
     const lat = parseFloat(pt.lat);
     const lon = parseFloat(pt.lon);
     if (isNaN(lat) || isNaN(lon)) return;
 
-    // Popup : localité, puissance et lien vers détail
+    // Popup : station, nb PDC, puissance max, types de prise
+    const detailUrl = `recherche.html?detail=${pt.id ?? ''}`;
     const popupHtml = `
       <div style="font-family:sans-serif;min-width:160px;">
         <strong>${pt.commune || '—'}</strong><br>
-        Puissance : ${pt.puissance_nominale ? pt.puissance_nominale + ' kW' : '—'}<br>
-        Type : ${pt.type_prise || '—'}<br>
-        <a href="#" onclick="afficherDetail(${pt.id});return false;"
-           style="color:#e63946;font-weight:bold;">Voir le détail →</a>
+        Points de charge : ${pt.nbre_pdc ?? '—'}<br>
+        Puissance max : ${pt.puissance_nominale ? pt.puissance_nominale + ' kW' : '—'}<br>
+        Types : ${pt.type_prise || '—'}<br>
+        ${pt.id ? `<a href="${detailUrl}" style="margin-top:6px;display:inline-block;">Voir le détail →</a>` : ''}
       </div>`;
 
     L.marker([lat, lon]).addTo(carteLeaflet).bindPopup(popupHtml);

@@ -35,7 +35,7 @@ function e($valeur): string {
 <!-- BARRE DE NAVIGATION DEMO -->
 <div id="demo-nav">
   <span>Back-End</span>
-  <a class="demo-btn" href="breizh_accueil.php">🏠 Accueil</a>
+  <a class="demo-btn" href="index.php">🏠 Accueil</a>
   <a class="demo-btn" href="breizh_creation.php">➕ Création</a>
   <a class="demo-btn" href="breizh_detail.php">🔍 Détail</a>
   <a class="demo-btn active" href="breizh_liste.php">📋 Liste</a>
@@ -48,7 +48,7 @@ function e($valeur): string {
       <span class="brand-name">Breizh Ohm</span>
     </div>
     <nav>
-      <a href="breizh_accueil.php">Accueil</a>
+      <a href="index.php">Accueil</a>
       <a class="active">Liste</a>
       <a href="breizh_creation.php">Ajouter</a>
     </nav>

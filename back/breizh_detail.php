@@ -11,7 +11,6 @@
 //    - Appelle le modèle pour interroger la base
 //    - Génère le HTML avec les données — aucun JS nécessaire
 // ============================================================
-<<<<<<< HEAD
 // Allow access from your specific frontend origin
 header("Access-Control-Allow-Origin: http://your-frontend-domain.com"); 
 // Or for local development testing only (do not use * in production):

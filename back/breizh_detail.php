@@ -11,15 +11,6 @@
 //    - Appelle le modèle pour interroger la base
 //    - Génère le HTML avec les données — aucun JS nécessaire
 // ============================================================
-// Allow access from your specific frontend origin
-header("Access-Control-Allow-Origin: http://your-frontend-domain.com"); 
-// Or for local development testing only (do not use * in production):
-// header("Access-Control-Allow-Origin: *");
-
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-=======
->>>>>>> c11cbb2dc3ad11b9434fb65ca234dcee420657ee
 
 require_once 'php/IRVEModel.php';
 

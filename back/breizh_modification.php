@@ -119,6 +119,8 @@ if (empty($champs) && $item) {
 
 <!-- BARRE DE NAVIGATION DEMO -->
 <div id="demo-nav">
+  <img src="../assets/logo_breizh_charge_groupe43_v2.png" alt="Breizh Ohm" style="width:26px;height:26px;object-fit:contain;"/>
+  <span class="brand-name" style="font-size:14px;margin-right:10px;">Breizh Ohm</span>
   <span>Back-End</span>
   <a class="demo-btn" href="index.php">🏠 Accueil</a>
   <a class="demo-btn" href="breizh_creation.php">➕ Création</a>
@@ -127,17 +129,6 @@ if (empty($champs) && $item) {
 </div>
 
 <div class="page-wrapper">
-  <header>
-    <div class="header-brand">
-      <div class="header-logo"><img src="../assets/logo_breizh_charge_groupe43_v2.png" alt="Breizh Ohm"/></div>
-      <span class="brand-name">Breizh Ohm</span>
-    </div>
-    <nav>
-      <a href="index.php">Accueil</a>
-      <a href="breizh_liste.php">Liste</a>
-      <a href="breizh_creation.php">Ajouter</a>
-    </nav>
-  </header>
 
   <main>
     <section>

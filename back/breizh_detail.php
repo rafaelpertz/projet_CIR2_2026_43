@@ -18,8 +18,7 @@ header("Access-Control-Allow-Origin: http://your-frontend-domain.com");
 
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
-=======
->>>>>>> c11cbb2dc3ad11b9434fb65ca234dcee420657ee
+
 
 require_once 'php/IRVEModel.php';
 

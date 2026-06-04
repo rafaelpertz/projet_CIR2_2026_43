@@ -22,12 +22,9 @@
 </head>
 <body>
 
-<!-- ============================================================
-     BARRE DE NAVIGATION DEMO (fixée en haut, z-index élevé)
-     Permet de naviguer entre les pages sans passer par les liens
-     du header principal. La classe "active" identifie la page courante.
-============================================================ -->
 <div id="demo-nav">
+  <img src="../assets/logo_breizh_charge_groupe43_v2.png" alt="Breizh Ohm" style="width:26px;height:26px;object-fit:contain;"/>
+  <span class="brand-name" style="font-size:14px;margin-right:10px;">Breizh Ohm</span>
   <span>Back-End</span>
   <a class="demo-btn active" href="index.php">🏠 Accueil</a>
   <a class="demo-btn" href="breizh_creation.php">➕ Création</a>
@@ -38,25 +35,7 @@
 <!-- Conteneur principal — flex column pour coller le footer en bas -->
 <div class="page-wrapper">
 
-  <!-- ============================================================
-       HEADER — Logo + navigation principale
-       La classe "active" sur le lien courant est appliquée en dur.
-  ============================================================ -->
-  <header>
-    <div class="header-brand">
-      <div class="header-logo">
-        <img src="../assets/logo_breizh_charge_groupe43_v2.png" alt="Breizh Ohm"/>
-      </div>
-      <span class="brand-name">Breizh Ohm</span>
-    </div>
-    <nav>
-      <a class="active" href="index.php">Accueil</a>
-      <a href="breizh_liste.php">Liste</a>
-      <a href="breizh_creation.php">Ajouter</a>
-    </nav>
-  </header>
-
-  <main>
+  <main style="display:flex; flex-direction:column;">
 
     <!-- ============================================================
          SECTION HERO
@@ -64,7 +43,7 @@
          Les deux boutons sont des <a> stylisés (pas de <button>)
          pour éviter tout besoin de JavaScript.
     ============================================================ -->
-    <div class="hero">
+    <div class="hero" style="flex:1;">
       <!-- Sphère décorative positionnée en absolu via CSS -->
       <div class="hero-sphere"></div>
 

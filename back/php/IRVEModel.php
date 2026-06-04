@@ -163,9 +163,14 @@ class IRVEModel {
 
             // --- 2. Opérateur ---
             $stmt = $this->db->prepare(
-                "INSERT INTO operateur (nom_operateur) VALUES (:nom)"
+                "INSERT INTO operateur (nom_operateur, contact_operateur, tel_operateur)
+                 VALUES (:nom, :contact, :tel)"
             );
-            $stmt->execute([':nom' => $data['nom_operateur']]);
+            $stmt->execute([
+                ':nom'     => $data['nom_operateur'],
+                ':contact' => $data['contact_operateur'] ?? null,
+                ':tel'     => $data['tel_operateur']     ?? null,
+            ]);
             $id_operateur = (int) $this->db->lastInsertId();
 
             // --- 3. Station ---
@@ -176,14 +181,16 @@ class IRVEModel {
             [$lng, $lat] = $this->parseCoords($data['coordonneesXY'] ?? '');
             $stmt = $this->db->prepare(
                 "INSERT INTO station
-                     (id_station_locale, nom_station, adresse_station,
-                      code_insee, longitude, latitude, id_amenageur, id_operateur)
-                 VALUES (:id_sl, :nom, :adresse, :code_insee, :lng, :lat, :id_a, :id_o)"
+                     (id_station_locale, id_station_itinerance, nom_station,
+                      adresse_station, code_insee, longitude, latitude,
+                      id_amenageur, id_operateur)
+                 VALUES (:id_sl, :id_iti, :nom, :adresse, :code_insee, :lng, :lat, :id_a, :id_o)"
             );
             $stmt->execute([
                 ':id_sl'      => $id_station_locale,
+                ':id_iti'     => $data['id_station_itinerance'] ?? null,
                 ':nom'        => $data['nom_commune'],
-                ':adresse'    => $data['nom_commune'],  // adresse = nom si non renseignée
+                ':adresse'    => !empty($data['adresse_station']) ? $data['adresse_station'] : $data['nom_commune'],
                 ':code_insee' => $data['code_insee'] ?? null,
                 ':lng'        => $lng,
                 ':lat'        => $lat,
@@ -194,9 +201,11 @@ class IRVEModel {
             // --- 4. PDC (Point De Charge) — une ligne par borne ---
             // max(1, …) : on garantit au moins 1 PDC même si le champ est absent
             $nbre = max(1, (int) ($data['nbre_pdc'] ?? 1));
+            $id_condition = $this->getOrCreateCondition($data['acces_recharge'] ?? '');
+
             $stmt = $this->db->prepare(
-                "INSERT INTO pdc (puissance_nominale, date_mise_service, id_station_locale)
-                 VALUES (:puissance, :date, :id_sl)"
+                "INSERT INTO pdc (puissance_nominale, date_mise_service, id_station_locale, id_condition)
+                 VALUES (:puissance, :date, :id_sl, :id_cond)"
             );
             $firstPdcId = null;
             for ($i = 0; $i < $nbre; $i++) {
@@ -204,6 +213,7 @@ class IRVEModel {
                     ':puissance' => !empty($data['puissance_nominale']) ? (float) $data['puissance_nominale'] : null,
                     ':date'      => !empty($data['date_mise_en_service']) ? $data['date_mise_en_service'] : null,
                     ':id_sl'     => $id_station_locale,
+                    ':id_cond'   => $id_condition,
                 ]);
                 // On mémorise seulement le premier id pour le retourner
                 if ($firstPdcId === null) {
@@ -435,6 +445,30 @@ class IRVEModel {
         $this->db->prepare(
             "INSERT IGNORE INTO pdc_type_prise (id_pdc, id_type_prise) VALUES (:id_pdc, :id_tp)"
         )->execute([':id_pdc' => $id_pdc, ':id_tp' => $id_tp]);
+    }
+
+    /**
+     * Retourne l'id de la condition d'accès correspondant au libellé,
+     * ou la crée si elle n'existe pas encore. Retourne null si vide.
+     */
+    private function getOrCreateCondition(string $condition): ?int {
+        if (empty($condition)) return null;
+
+        $stmt = $this->db->prepare(
+            "SELECT id_condition FROM condition_d_acces WHERE condition_acces = :cond"
+        );
+        $stmt->execute([':cond' => $condition]);
+        $id = $stmt->fetchColumn();
+
+        if (!$id) {
+            $ins = $this->db->prepare(
+                "INSERT INTO condition_d_acces (condition_acces) VALUES (:cond)"
+            );
+            $ins->execute([':cond' => $condition]);
+            $id = (int) $this->db->lastInsertId();
+        }
+
+        return (int) $id;
     }
 
     /**

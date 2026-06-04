@@ -25,17 +25,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Récupère et nettoie chaque champ envoyé
     $champs = [
-        'nom_amenageur'        => trim($_POST['nom_amenageur']        ?? ''),
-        'siren_amenageur'      => trim($_POST['siren_amenageur']      ?? ''),
-        'contact_amenageur'    => trim($_POST['contact_amenageur']    ?? ''),
-        'nom_operateur'        => trim($_POST['nom_operateur']        ?? ''),
-        'nom_commune'          => trim($_POST['nom_commune']          ?? ''),
-        'nbre_pdc'             => trim($_POST['nbre_pdc']             ?? ''),
-        'type_prise'           => trim($_POST['type_prise']           ?? ''),
-        'puissance_nominale'   => trim($_POST['puissance_nominale']   ?? ''),
-        'date_mise_en_service' => trim($_POST['date_mise_en_service'] ?? ''),
-        'lat'                  => trim($_POST['lat']                  ?? ''),
-        'lng'                  => trim($_POST['lng']                  ?? ''),
+        'nom_amenageur'           => trim($_POST['nom_amenageur']           ?? ''),
+        'siren_amenageur'         => trim($_POST['siren_amenageur']         ?? ''),
+        'contact_amenageur'       => trim($_POST['contact_amenageur']       ?? ''),
+        'nom_operateur'           => trim($_POST['nom_operateur']           ?? ''),
+        'contact_operateur'       => trim($_POST['contact_operateur']       ?? ''),
+        'tel_operateur'           => trim($_POST['tel_operateur']           ?? ''),
+        'id_station_itinerance'   => trim($_POST['id_station_itinerance']   ?? ''),
+        'nom_commune'             => trim($_POST['nom_commune']             ?? ''),
+        'adresse_station'         => trim($_POST['adresse_station']         ?? ''),
+        'code_insee'              => trim($_POST['code_insee']              ?? ''),
+        'nbre_pdc'                => trim($_POST['nbre_pdc']                ?? ''),
+        'type_prise'              => trim($_POST['type_prise']              ?? ''),
+        'puissance_nominale'      => trim($_POST['puissance_nominale']      ?? ''),
+        'date_mise_en_service'    => trim($_POST['date_mise_en_service']    ?? ''),
+        'acces_recharge'          => trim($_POST['acces_recharge']          ?? ''),
+        'lat'                     => trim($_POST['lat']                     ?? ''),
+        'lng'                     => trim($_POST['lng']                     ?? ''),
     ];
 
     // Validation des champs obligatoires
@@ -55,19 +61,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($erreur === '') {
         // Construit le tableau de données attendu par IRVEModel::create()
         $data = [
-            'nom_amenageur'        => $champs['nom_amenageur'],
-            'siren_amenageur'      => $champs['siren_amenageur'],
-            'contact_amenageur'    => $champs['contact_amenageur'],
-            'nom_operateur'        => $champs['nom_operateur'],
-            'nom_commune'          => $champs['nom_commune'],
-            'nbre_pdc'             => (int)$champs['nbre_pdc'],
-            'type_prise'           => $champs['type_prise'],
-            'puissance_nominale'   => $champs['puissance_nominale'] !== '' ? (float)$champs['puissance_nominale'] : null,
-            'date_mise_en_service' => $champs['date_mise_en_service'] !== '' ? $champs['date_mise_en_service'] : null,
+            'nom_amenageur'         => $champs['nom_amenageur'],
+            'siren_amenageur'       => $champs['siren_amenageur'],
+            'contact_amenageur'     => $champs['contact_amenageur'],
+            'nom_operateur'         => $champs['nom_operateur'],
+            'contact_operateur'     => $champs['contact_operateur']     !== '' ? $champs['contact_operateur']     : null,
+            'tel_operateur'         => $champs['tel_operateur']         !== '' ? $champs['tel_operateur']         : null,
+            'id_station_itinerance' => $champs['id_station_itinerance'] !== '' ? $champs['id_station_itinerance'] : null,
+            'nom_commune'           => $champs['nom_commune'],
+            'adresse_station'       => $champs['adresse_station']       !== '' ? $champs['adresse_station']       : null,
+            'code_insee'            => $champs['code_insee']            !== '' ? $champs['code_insee']            : null,
+            'nbre_pdc'              => (int)$champs['nbre_pdc'],
+            'type_prise'            => $champs['type_prise'],
+            'puissance_nominale'    => $champs['puissance_nominale']    !== '' ? (float)$champs['puissance_nominale'] : null,
+            'date_mise_en_service'  => $champs['date_mise_en_service']  !== '' ? $champs['date_mise_en_service']  : null,
+            'acces_recharge'        => $champs['acces_recharge']        !== '' ? $champs['acces_recharge']        : null,
             // Coordonnées au format "lng,lat" attendu par le modèle
-            'coordonneesXY'        => ($champs['lng'] !== '' && $champs['lat'] !== '')
-                                        ? $champs['lng'] . ',' . $champs['lat']
-                                        : null,
+            'coordonneesXY'         => ($champs['lng'] !== '' && $champs['lat'] !== '')
+                                         ? $champs['lng'] . ',' . $champs['lat']
+                                         : null,
         ];
 
         $model = new IRVEModel();
@@ -92,6 +104,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!-- BARRE DE NAVIGATION DEMO -->
 <div id="demo-nav">
+  <img src="../assets/logo_breizh_charge_groupe43_v2.png" alt="Breizh Ohm" style="width:26px;height:26px;object-fit:contain;"/>
+  <span class="brand-name" style="font-size:14px;margin-right:10px;">Breizh Ohm</span>
   <span>Back-End</span>
   <a class="demo-btn" href="index.php">🏠 Accueil</a>
   <a class="demo-btn active" href="breizh_creation.php">➕ Création</a>
@@ -100,17 +114,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <div class="page-wrapper">
-  <header>
-    <div class="header-brand">
-      <div class="header-logo"><img src="../assets/logo_breizh_charge_groupe43_v2.png" alt="Breizh Ohm"/></div>
-      <span class="brand-name">Breizh Ohm</span>
-    </div>
-    <nav>
-      <a href="index.php">Accueil</a>
-      <a href="breizh_liste.php">Liste</a>
-      <a class="active">Ajouter</a>
-    </nav>
-  </header>
 
   <main>
     <section>
@@ -176,6 +179,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-row">
               <div class="form-group">
+                <label>Contact opérateur</label>
+                <input name="contact_operateur" type="email" placeholder="contact@operateur.com"
+                       value="<?= e($champs['contact_operateur'] ?? '') ?>"/>
+              </div>
+              <div class="form-group">
+                <label>Téléphone opérateur</label>
+                <input name="tel_operateur" type="tel" placeholder="ex : +33 2 99 00 00 00"
+                       value="<?= e($champs['tel_operateur'] ?? '') ?>"/>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
                 <label>Nombre de PDC <span class="req">*</span></label>
                 <input name="nbre_pdc" type="number" placeholder="3" min="1"
                        value="<?= e($champs['nbre_pdc'] ?? '') ?>"/>
@@ -189,15 +205,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-row">
               <div class="form-group">
+                <label>Date de mise en service</label>
+                <input name="date_mise_en_service" type="date"
+                       value="<?= e($champs['date_mise_en_service'] ?? '') ?>"/>
+              </div>
+              <div class="form-group">
+                <label>Condition d'accès</label>
+                <input name="acces_recharge" type="text" placeholder="ex : Accès libre"
+                       value="<?= e($champs['acces_recharge'] ?? '') ?>"/>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>ID station itinérance</label>
+              <input name="id_station_itinerance" type="text" placeholder="ex : FR*P62*S0001"
+                     value="<?= e($champs['id_station_itinerance'] ?? '') ?>"/>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
                 <label>Commune <span class="req">*</span></label>
                 <input name="nom_commune" type="text" placeholder="ex : Rennes"
                        value="<?= e($champs['nom_commune'] ?? '') ?>"/>
               </div>
               <div class="form-group">
-                <label>Date de mise en service</label>
-                <input name="date_mise_en_service" type="date"
-                       value="<?= e($champs['date_mise_en_service'] ?? '') ?>"/>
+                <label>Code INSEE</label>
+                <input name="code_insee" type="text" placeholder="ex : 35238"
+                       value="<?= e($champs['code_insee'] ?? '') ?>"/>
               </div>
+            </div>
+
+            <div class="form-group">
+              <label>Adresse station</label>
+              <input name="adresse_station" type="text" placeholder="ex : 12 rue de la Paix"
+                     value="<?= e($champs['adresse_station'] ?? '') ?>"/>
             </div>
 
             <div class="form-row">

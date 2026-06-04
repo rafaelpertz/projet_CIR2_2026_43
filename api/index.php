@@ -47,6 +47,24 @@ try {
         exit;
     }
 
+    // GET /operateurs
+    if ($path === '/operateurs') {
+        $rows = $pdo->query(
+            'SELECT id_operateur AS id, nom_operateur AS nom FROM operateur WHERE nom_operateur IS NOT NULL ORDER BY nom_operateur'
+        )->fetchAll();
+        echo json_encode($rows);
+        exit;
+    }
+
+    // GET /conditions-acces
+    if ($path === '/conditions-acces') {
+        $rows = $pdo->query(
+            'SELECT id_condition AS id, condition_acces AS libelle FROM condition_d_acces WHERE condition_acces IS NOT NULL ORDER BY condition_acces'
+        )->fetchAll();
+        echo json_encode($rows);
+        exit;
+    }
+
     // GET /departements
     if ($path === '/departements') {
         $noms = [
@@ -70,36 +88,52 @@ try {
         exit;
     }
 
-    // GET /installations/carte?annee=&dept=
+    // GET /installations/carte?annee=&dept=&nom=&prise=&puissance_min=&amenageur=
     if ($path === '/installations/carte') {
         $params = [];
-        $where  = [];
+        $where  = ['s.latitude IS NOT NULL', 's.longitude IS NOT NULL'];
 
         if (!empty($_GET['annee'])) {
-            $where[]  = 'YEAR(p.date_mise_service) = :annee';
+            $where[]  = 'EXISTS (SELECT 1 FROM pdc p2 WHERE p2.id_station_locale = s.id_station_locale AND YEAR(p2.date_mise_service) = :annee)';
             $params[':annee'] = (int)$_GET['annee'];
         }
         if (!empty($_GET['dept'])) {
             $where[]  = 's.code_dep = :dept';
             $params[':dept'] = $_GET['dept'];
         }
+        if (!empty($_GET['nom'])) {
+            $where[]  = 's.nom_station LIKE :nom';
+            $params[':nom'] = '%' . $_GET['nom'] . '%';
+        }
+        if (!empty($_GET['prise'])) {
+            $where[]  = 'EXISTS (SELECT 1 FROM pdc p3 JOIN pdc_type_prise ptp3 ON ptp3.id_pdc = p3.id_pdc WHERE p3.id_station_locale = s.id_station_locale AND ptp3.id_type_prise = :prise)';
+            $params[':prise'] = (int)$_GET['prise'];
+        }
+        if (!empty($_GET['puissance_min'])) {
+            $where[]  = 'EXISTS (SELECT 1 FROM pdc p4 WHERE p4.id_station_locale = s.id_station_locale AND p4.puissance_nominale >= :puissance_min)';
+            $params[':puissance_min'] = (float)$_GET['puissance_min'];
+        }
+        if (!empty($_GET['amenageur'])) {
+            $where[]  = 's.id_amenageur = :amenageur';
+            $params[':amenageur'] = (int)$_GET['amenageur'];
+        }
 
         $sql = '
             SELECT
-                p.id_pdc                            AS id,
+                s.id_station_locale                 AS id,
                 s.latitude                          AS lat,
                 s.longitude                         AS lon,
                 s.nom_station                       AS commune,
-                p.puissance_nominale,
-                GROUP_CONCAT(tp.libelle_type_prise ORDER BY tp.libelle_type_prise SEPARATOR \', \') AS type_prise
-            FROM pdc p
-            JOIN station s       ON s.id_station_locale = p.id_station_locale
+                COUNT(DISTINCT p.id_pdc)            AS nbre_pdc,
+                MAX(p.puissance_nominale)           AS puissance_nominale,
+                GROUP_CONCAT(DISTINCT tp.libelle_type_prise ORDER BY tp.libelle_type_prise SEPARATOR \', \') AS type_prise
+            FROM station s
+            LEFT JOIN pdc p              ON p.id_station_locale = s.id_station_locale
             LEFT JOIN pdc_type_prise ptp ON ptp.id_pdc = p.id_pdc
             LEFT JOIN type_prise tp      ON tp.id_type_prise = ptp.id_type_prise
-            WHERE s.latitude IS NOT NULL AND s.longitude IS NOT NULL
-        ';
-        if ($where) $sql .= ' AND ' . implode(' AND ', $where);
-        $sql .= ' GROUP BY p.id_pdc LIMIT 2000';
+            WHERE ' . implode(' AND ', $where) . '
+            GROUP BY s.id_station_locale
+            LIMIT 2000';
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
@@ -152,7 +186,7 @@ try {
         exit;
     }
 
-    // GET /installations?amenageur=&prise=&dept=
+    // GET /installations?amenageur=&prise=&dept=&nom=&puissance_min=&acces=&gratuit=&operateur=
     if ($path === '/installations') {
         $params = [];
         $where  = [];
@@ -172,6 +206,26 @@ try {
         if (!empty($_GET['dept'])) {
             $where[]  = 's.code_dep = :dept';
             $params[':dept'] = $_GET['dept'];
+        }
+        if (!empty($_GET['nom'])) {
+            $where[]  = 's.nom_station LIKE :nom';
+            $params[':nom'] = '%' . $_GET['nom'] . '%';
+        }
+        if (!empty($_GET['puissance_min'])) {
+            $where[]  = 'p.puissance_nominale >= :puissance_min';
+            $params[':puissance_min'] = (float)$_GET['puissance_min'];
+        }
+        if (!empty($_GET['acces'])) {
+            $where[]  = 'p.id_condition = :acces';
+            $params[':acces'] = (int)$_GET['acces'];
+        }
+        if (isset($_GET['gratuit']) && $_GET['gratuit'] !== '') {
+            $where[]  = 'p.gratuit = :gratuit';
+            $params[':gratuit'] = (int)$_GET['gratuit'];
+        }
+        if (!empty($_GET['operateur'])) {
+            $where[]  = 's.id_operateur = :operateur';
+            $params[':operateur'] = (int)$_GET['operateur'];
         }
 
         $sql = '

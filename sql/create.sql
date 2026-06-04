@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- Table : amenageur
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS amenageur (
-    id_amenageur    SMALLINT        NOT NULL AUTO_INCREMENT,
+    id_amenageur    INTEGER        NOT NULL AUTO_INCREMENT,
     nom_amenageur   TEXT,
     siren_amenageur INT,
     contact_amenageur TEXT,
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS amenageur (
 -- Table : operateur
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS operateur (
-    id_operateur        SMALLINT        NOT NULL AUTO_INCREMENT,
+    id_operateur        INTEGER        NOT NULL AUTO_INCREMENT,
     nom_operateur       VARCHAR(100),
     contact_operateur   TEXT,
     tel_operateur       VARCHAR(50),
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS operateur (
 -- Table : enseigne
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS enseigne (
-    id_enseigne     SMALLINT        NOT NULL AUTO_INCREMENT,
+    id_enseigne     INTEGER        NOT NULL AUTO_INCREMENT,
     nom_enseigne    VARCHAR(100),
     PRIMARY KEY (id_enseigne)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS enseigne (
 -- Table : type_prise
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS type_prise (
-    id_type_prise       SMALLINT        NOT NULL AUTO_INCREMENT,
+    id_type_prise       INTEGER        NOT NULL AUTO_INCREMENT,
     libelle_type_prise  VARCHAR(50)     NOT NULL,
     PRIMARY KEY (id_type_prise)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -58,7 +58,7 @@ INSERT INTO type_prise (libelle_type_prise) VALUES
 -- Table : horaires
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS horaires (
-    id_horaires     SMALLINT        NOT NULL AUTO_INCREMENT,
+    id_horaires     INTEGER       NOT NULL AUTO_INCREMENT,
     horaires        VARCHAR(100)    NOT NULL,
     PRIMARY KEY (id_horaires)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS horaires (
 -- Table : condition_d_acces
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS condition_d_acces (
-    id_condition        SMALLINT        NOT NULL AUTO_INCREMENT,
+    id_condition        INTEGER        NOT NULL AUTO_INCREMENT,
     condition_acces     VARCHAR(100)    NOT NULL,
     PRIMARY KEY (id_condition)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -88,9 +88,9 @@ CREATE TABLE IF NOT EXISTS station (
     longitude               FLOAT,
     latitude                FLOAT,
     raccordement            VARCHAR(50),
-    id_amenageur            SMALLINT,
-    id_operateur            SMALLINT,
-    id_enseigne             SMALLINT,
+    id_amenageur            INTEGER,
+    id_operateur            INTEGER,
+    id_enseigne             INTEGER,
     PRIMARY KEY (id_station_locale),
     CONSTRAINT fk_station_amenageur FOREIGN KEY (id_amenageur)
         REFERENCES amenageur(id_amenageur) ON DELETE SET NULL ON UPDATE CASCADE,
@@ -105,17 +105,17 @@ CREATE TABLE IF NOT EXISTS station (
 -- Reçoit la FK de station (contient), horaires, condition_d_acces
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS pdc (
-    id_pdc              SMALLINT        NOT NULL AUTO_INCREMENT,
+    id_pdc              INT             NOT NULL AUTO_INCREMENT,
     puissance_nominale  FLOAT,
     date_mise_service   DATE,
     cable_t2_attache    BOOLEAN,
     gratuit             BOOLEAN,
     paiment_acte        BOOLEAN,
     paiment_cb          BOOLEAN,
-    tarification        VARCHAR(100),
+    tarification        VARCHAR(500),
     id_station_locale   VARCHAR(100)    NOT NULL,
-    id_horaires         SMALLINT,
-    id_condition        SMALLINT,
+    id_horaires         INTEGER,
+    id_condition        INTEGER,
     PRIMARY KEY (id_pdc),
     CONSTRAINT fk_pdc_station    FOREIGN KEY (id_station_locale)
         REFERENCES station(id_station_locale) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -130,8 +130,8 @@ CREATE TABLE IF NOT EXISTS pdc (
 -- Relation N,N entre PDC et type_prise (est_equipe_de)
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS pdc_type_prise (
-    id_pdc          SMALLINT    NOT NULL,
-    id_type_prise   SMALLINT    NOT NULL,
+    id_pdc          INT         NOT NULL,
+    id_type_prise   INTEGER    NOT NULL,
     PRIMARY KEY (id_pdc, id_type_prise),
     CONSTRAINT fk_pdctp_pdc        FOREIGN KEY (id_pdc)
         REFERENCES pdc(id_pdc) ON DELETE CASCADE ON UPDATE CASCADE,

@@ -13,9 +13,8 @@
 
 require_once 'php/IRVEModel.php';
 
-// Fonction utilitaire : échappe les caractères spéciaux HTML (anti-XSS)
 function e($valeur): string {
-    return htmlspecialchars((string)($valeur ?? ''), ENT_QUOTES, 'UTF-8');
+    return (string)($valeur ?? '');
 }
 
 $model = new IRVEModel();

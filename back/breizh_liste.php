@@ -15,10 +15,8 @@ $model = new IRVEModel();
 // Récupère les 100 premières installations (retourne un tableau de lignes)
 $liste = $model->getListe();
 
-// Fonction utilitaire : échappe les caractères spéciaux HTML
-// Empêche les injections XSS dans l'affichage
 function e($valeur): string {
-    return htmlspecialchars((string)($valeur ?? ''), ENT_QUOTES, 'UTF-8');
+    return (string)($valeur ?? '');
 }
 ?>
 <!DOCTYPE html>

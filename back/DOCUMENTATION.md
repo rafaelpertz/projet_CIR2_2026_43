@@ -30,15 +30,7 @@ back/
 
 ## Principe de fonctionnement PHP
 
-### Avant (JavaScript + AJAX)
-```
-Navigateur charge la page HTML vide
-→ JavaScript fait un fetch() vers api.php
-→ api.php interroge la base
-→ JavaScript reçoit le JSON et construit le HTML
-```
-
-### Maintenant (PHP pur)
+### PHP pur
 ```
 Navigateur demande breizh_liste.php
 → PHP interroge directement la base via IRVEModel
@@ -50,7 +42,7 @@ Navigateur demande breizh_liste.php
 
 ## Pages en détail
 
-### breizh_accueil.php
+### index.php
 - Page statique, aucune donnée en base.
 - Les boutons du hero (`Ajouter`, `Modifier`) sont des liens `<a href="...">`.
 
@@ -66,10 +58,10 @@ Navigateur demande breizh_liste.php
 ### breizh_detail.php
 
 **Paramètres GET acceptés :**
-| Paramètre | Exemple       | Effet                                  |
-|-----------|---------------|----------------------------------------|
-| `id`      | `?id=42`      | Affiche le détail de l'installation 42 |
-| `nom`     | `?nom=Rennes` | Recherche les aménageurs contenant "Rennes" |
+| Paramètre | Exemple       | Effet                                    |
+|-----------|---------------|------------------------------------------|
+| `id`      | `?id=42`      | Affiche le détail de l'installation 42   |
+| `nom`     | `?nom=R3`     | Recherche les aménageurs se nommant "R3" |
 
 **Fonctionnement :**
 1. PHP lit `$_GET['id']` et appelle `$model->getById($id)` → affiche les tableaux de détail.
@@ -154,5 +146,5 @@ pour se protéger contre les injections SQL.
 
 Avec WAMP actif, accéder à :
 ```
-http://localhost/projet_CIR2_2026_43/back/breizh_accueil.php
+http://localhost/projet_CIR2_2026_43/back/index.php
 ```

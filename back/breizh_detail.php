@@ -11,7 +11,6 @@
 //    - Appelle le modèle pour interroger la base
 //    - Génère le HTML avec les données — aucun JS nécessaire
 // ============================================================
-
 require_once 'php/IRVEModel.php';
 
 $model = new IRVEModel();

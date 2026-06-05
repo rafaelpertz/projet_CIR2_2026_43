@@ -70,7 +70,7 @@
       </div>
       <div>
         <div class="footer-name">Breizh Ohm</div>
-        <div style="font-size:10px;color:#555;margin-top:2px;">IRVE · CIN2 · 2026</div>
+        <div style="font-size:10px;color:rgba(90,45,20,0.6);margin-top:2px;">IRVE · CIN2 · 2026</div>
       </div>
     </div>
     <div class="footer-meta">

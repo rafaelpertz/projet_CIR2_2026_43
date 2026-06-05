@@ -516,7 +516,7 @@ function afficherMarqueurs(points) {
   });
 }
 
-<<<<<<< HEAD
+
 
 /* ================================================================
    FONCTIONNALITÉ ITINÉRAIRE
@@ -804,7 +804,7 @@ async function chercherItineraire() {
   }
 }
 
-=======
+
 /**
  * Ouvre le panneau latéral et charge les PDC de la station.
  * @param {string} stationId
@@ -864,4 +864,4 @@ function fermerPanelStation() {
   setTimeout(() => carteLeaflet && carteLeaflet.invalidateSize(), 50);
 }
 
->>>>>>> 121c4424d7e6156290c85eebaaa2a47864d4c40f
+

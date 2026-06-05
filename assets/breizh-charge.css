@@ -305,7 +305,7 @@ nav ul li a:hover { color: #fff; }
 .map-section  { background: var(--dark3); padding: 40px 60px; }
 .map-header   { margin-bottom: 20px; }
 .map-header h2 { font-size: 1.4rem; font-weight: 900; }
-<<<<<<< HEAD
+
 .map-header p  { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
 
 /* Wrapper relatif : contient carte + panneau coulissant */
@@ -552,7 +552,7 @@ nav ul li a:hover { color: #fff; }
 .route-toggle-arrow { font-size: 0.9rem; transition: transform 0.3s; }
 .route-toggle.panel-open .route-toggle-arrow { transform: rotate(180deg); }
 .route-toggle-label { letter-spacing: .4px; }
-=======
+
 .map-header p { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
 .result-count { font-size: 2.5rem; font-weight: 900; color: #fff; margin: 8px 0; }
 .map-container { position: relative; background: #1a3a5c; border-radius: 8px 0 0 8px; overflow: hidden; height: 500px; z-index: 0; }
@@ -595,7 +595,7 @@ nav ul li a:hover { color: #fff; }
 }
 .pdc-card .btn-detail:hover { opacity: 0.85; }
 .panel-loading { color: var(--muted); font-size: 0.9rem; text-align: center; padding: 20px; }
->>>>>>> 121c4424d7e6156290c85eebaaa2a47864d4c40f
+
 
 /* ============================================================
    PIED DE PAGE (commun à toutes les pages front)

@@ -328,10 +328,9 @@ textarea { resize: vertical; min-height: 90px; }
 
 
 /* ===== FOOTER =====
-   Pied de page sombre avec informations du projet.
-   Le fond #1a1a1a contraste volontairement avec le fond clair du reste. */
+   Pied de page orange — même couleur accent que le reste de l'interface. */
 footer {
-  background: #1a1a1a; color: #888;
+  background: #f0b898; color: rgba(90,45,20,0.7);
   padding: 24px 40px;
   display: flex; align-items: center; justify-content: space-between;
   font-size: 12px;
@@ -342,10 +341,10 @@ footer {
 .footer-logo  { width: 44px; height: 44px; overflow: hidden; }
 .footer-logo img { width: 100%; height: 100%; object-fit: contain; }
 
-/* Nom de la marque en blanc pour le contraste sur fond noir */
-.footer-name { color: #fff; font-family: 'Playfair Display', serif; font-size: 16px; }
+/* Nom de la marque en brun foncé sur fond orange pâle */
+.footer-name { color: #5a3018; font-family: 'Playfair Display', serif; font-size: 16px; }
 
 /* Infos auteurs alignées à droite */
 .footer-meta            { text-align: right; }
-.footer-meta p          { color: #666; }
-.footer-meta p:first-child { color: #aaa; } /* Première ligne légèrement plus claire */
+.footer-meta p          { color: rgba(90,45,20,0.7); }
+.footer-meta p:first-child { color: #5a3018; }

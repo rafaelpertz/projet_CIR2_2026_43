@@ -94,8 +94,8 @@ async function loadStats() {
   const elTotal = document.getElementById('stat-total');
   if (elTotal) elTotal.textContent = total.toLocaleString('fr-FR');
 
-  const elPdc = document.getElementById('stat-pdc');
-  if (elPdc) elPdc.textContent = total.toLocaleString('fr-FR');
+  const elTypes = document.getElementById('stat-types-prise');
+  if (elTypes) elTypes.textContent = (stats.types_prise ?? []).length;
 
   const elAmen = document.getElementById('stat-amenageurs');
   if (elAmen) elAmen.textContent = (stats.amenageurs ?? 0).toLocaleString('fr-FR');
@@ -424,7 +424,9 @@ function initDetailMap(lat, lon, titre) {
     maxZoom: 19
   }).addTo(detailMapLeaflet);
   L.marker([lat, lon]).addTo(detailMapLeaflet).bindPopup(titre).openPopup();
-}q
+  // Recalcule la taille au cas où le conteneur était caché lors de l'init
+  setTimeout(() => detailMapLeaflet && detailMapLeaflet.invalidateSize(), 150);
+}
 
 /* ============================================================
    FONCTIONNALITÉ 5 — CARTE OPENSTREETMAP / LEAFLET

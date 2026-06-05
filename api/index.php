@@ -120,7 +120,7 @@ try {
 
         $sql = '
             SELECT
-                s.id_station_locale                 AS id,
+                MIN(p.id_pdc)                       AS id,
                 s.latitude                          AS lat,
                 s.longitude                         AS lon,
                 s.nom_station                       AS commune,
@@ -128,7 +128,7 @@ try {
                 MAX(p.puissance_nominale)           AS puissance_nominale,
                 GROUP_CONCAT(DISTINCT tp.libelle_type_prise ORDER BY tp.libelle_type_prise SEPARATOR \', \') AS type_prise
             FROM station s
-            LEFT JOIN pdc p              ON p.id_station_locale = s.id_station_locale
+            INNER JOIN pdc p             ON p.id_station_locale = s.id_station_locale
             LEFT JOIN pdc_type_prise ptp ON ptp.id_pdc = p.id_pdc
             LEFT JOIN type_prise tp      ON tp.id_type_prise = ptp.id_type_prise
             WHERE ' . implode(' AND ', $where) . '

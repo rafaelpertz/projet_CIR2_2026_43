@@ -133,20 +133,20 @@ try {
 
         $sql = '
             SELECT
-                s.id_station_locale                 AS id,
+                s.id_station_locale                 AS station_id,
+                MIN(p.id_pdc)                       AS id,
                 s.latitude                          AS lat,
                 s.longitude                         AS lon,
                 s.nom_station                       AS commune,
                 COUNT(DISTINCT p.id_pdc)            AS nbre_pdc,
-                MAX(p.puissance_nominale)           AS puissance_nominale,
+                MAX(p.puissance_nominale)            AS puissance_nominale,
                 GROUP_CONCAT(DISTINCT tp.libelle_type_prise ORDER BY tp.libelle_type_prise SEPARATOR \', \') AS type_prise
             FROM station s
-            LEFT JOIN pdc p              ON p.id_station_locale = s.id_station_locale
+            INNER JOIN pdc p             ON p.id_station_locale = s.id_station_locale
             LEFT JOIN pdc_type_prise ptp ON ptp.id_pdc = p.id_pdc
             LEFT JOIN type_prise tp      ON tp.id_type_prise = ptp.id_type_prise
             WHERE ' . implode(' AND ', $where) . '
-            GROUP BY s.id_station_locale
-            LIMIT 2000';
+            GROUP BY s.id_station_locale';
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
@@ -256,11 +256,112 @@ try {
             LEFT JOIN type_prise tp        ON tp.id_type_prise = ptp.id_type_prise
         ';
         if ($where) $sql .= ' WHERE ' . implode(' AND ', $where);
-        $sql .= ' GROUP BY p.id_pdc ORDER BY p.date_mise_service DESC LIMIT 500';
+        $sql .= ' GROUP BY p.id_pdc ORDER BY p.date_mise_service DESC';
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         echo json_encode($stmt->fetchAll());
+        exit;
+    }
+
+    // GET /pdcs?station=<id_station_locale>
+    if ($path === '/pdcs') {
+        $station = $_GET['station'] ?? '';
+        if (empty($station)) { echo json_encode([]); exit; }
+
+        $stmt = $pdo->prepare('
+            SELECT
+                p.id_pdc                            AS id,
+                p.puissance_nominale,
+                p.date_mise_service,
+                p.gratuit,
+                ca.condition_acces                  AS acces_recharge,
+                GROUP_CONCAT(DISTINCT tp.libelle_type_prise ORDER BY tp.libelle_type_prise SEPARATOR \', \') AS type_prise
+            FROM pdc p
+            LEFT JOIN pdc_type_prise ptp  ON ptp.id_pdc     = p.id_pdc
+            LEFT JOIN type_prise tp       ON tp.id_type_prise = ptp.id_type_prise
+            LEFT JOIN condition_d_acces ca ON ca.id_condition = p.id_condition
+            WHERE p.id_station_locale = :station
+            GROUP BY p.id_pdc
+            ORDER BY p.id_pdc
+        ');
+        $stmt->execute([':station' => $station]);
+        echo json_encode($stmt->fetchAll());
+        exit;
+    }
+
+    // GET /stats
+    if ($path === '/stats') {
+        // Total PDC (enregistrements)
+        $total = (int)$pdo->query('SELECT COUNT(*) FROM pdc')->fetchColumn();
+
+        // Nb aménageurs distincts ayant au moins une station
+        $nbAmenageurs = (int)$pdo->query(
+            'SELECT COUNT(DISTINCT id_amenageur) FROM station WHERE id_amenageur IS NOT NULL'
+        )->fetchColumn();
+
+        // Nb départements couverts
+        $nbDepts = (int)$pdo->query(
+            'SELECT COUNT(DISTINCT code_dep) FROM station WHERE code_dep IS NOT NULL'
+        )->fetchColumn();
+
+        // Installations par année
+        $parAnnee = $pdo->query(
+            'SELECT YEAR(date_mise_service) AS annee, COUNT(*) AS nb
+             FROM pdc WHERE date_mise_service IS NOT NULL
+             GROUP BY YEAR(date_mise_service) ORDER BY annee'
+        )->fetchAll();
+
+        // Installations par département
+        $parDept = $pdo->query(
+            'SELECT s.code_dep, COUNT(p.id_pdc) AS nb
+             FROM pdc p
+             JOIN station s ON s.id_station_locale = p.id_station_locale
+             WHERE s.code_dep IS NOT NULL
+             GROUP BY s.code_dep ORDER BY nb DESC'
+        )->fetchAll();
+
+        // Tableau croisé année × département
+        $crudeRows = $pdo->query(
+            'SELECT YEAR(p.date_mise_service) AS annee, s.code_dep, COUNT(*) AS nb
+             FROM pdc p
+             JOIN station s ON s.id_station_locale = p.id_station_locale
+             WHERE p.date_mise_service IS NOT NULL AND s.code_dep IS NOT NULL
+             GROUP BY YEAR(p.date_mise_service), s.code_dep ORDER BY annee'
+        )->fetchAll();
+        // Pivot en JS-friendly : { annee, d22, d29, d35, d56 }
+        $croise = [];
+        foreach ($crudeRows as $r) {
+            $a = $r['annee'];
+            if (!isset($croise[$a])) $croise[$a] = ['annee' => $a, 'd22'=>0,'d29'=>0,'d35'=>0,'d56'=>0];
+            $key = 'd' . $r['code_dep'];
+            if (isset($croise[$a][$key])) $croise[$a][$key] = (int)$r['nb'];
+        }
+        $croise = array_values($croise);
+
+        // Types de prise avec pourcentages
+        $totalPrises = (int)$pdo->query('SELECT COUNT(*) FROM pdc_type_prise')->fetchColumn();
+        $typesPrise = $pdo->query(
+            'SELECT tp.libelle_type_prise AS type, COUNT(ptp.id_pdc) AS nb
+             FROM pdc_type_prise ptp
+             JOIN type_prise tp ON tp.id_type_prise = ptp.id_type_prise
+             GROUP BY tp.id_type_prise, tp.libelle_type_prise ORDER BY nb DESC'
+        )->fetchAll();
+        foreach ($typesPrise as &$t) {
+            $t['nb']  = (int)$t['nb'];
+            $t['pct'] = $totalPrises > 0 ? round($t['nb'] / $totalPrises * 100, 1) : 0;
+        }
+        unset($t);
+
+        echo json_encode([
+            'total'       => $total,
+            'amenageurs'  => $nbAmenageurs,
+            'departements'=> $nbDepts,
+            'par_annee'   => $parAnnee,
+            'par_dept'    => $parDept,
+            'croise'      => $croise,
+            'types_prise' => $typesPrise,
+        ]);
         exit;
     }
 

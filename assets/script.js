@@ -14,7 +14,7 @@
 /* ============================================================
    CONFIGURATION API
    ============================================================ */
-const API_BASE = '/api'; // Racine de l'API PHP REST
+const API_BASE = 'api'; // Chemin relatif — fonctionne avec vhost et sous-dossier
 
 /* ============================================================
    NAVIGATION ENTRE PAGES
@@ -43,9 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const page = document.body.dataset.page;
 
   if (page === 'home') {
-    buildYearChart();
-    buildDeptChart();
-    buildCrossTable();
+    loadStats();
   }
 
   if (page === 'recherche') {
@@ -65,104 +63,141 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ============================================================
-   GRAPHIQUES DE LA PAGE D'ACCUEIL
+   GRAPHIQUES DE LA PAGE D'ACCUEIL — données dynamiques via API
    ============================================================ */
 
-/** Données statiques des installations par année (issues du CSV IRVE) */
-const yearData = [
-  {y:'2014',v:4},{y:'2015',v:13},{y:'2016',v:273},{y:'2017',v:279},
-  {y:'2018',v:36},{y:'2019',v:56},{y:'2020',v:25},{y:'2021',v:107},
-  {y:'2022',v:388},{y:'2023',v:945},{y:'2024',v:623},{y:'2025',v:545},{y:'2026',v:21}
-];
+/** Noms complets des départements bretons */
+const DEPT_LABELS = {
+  '22': '22 – Côtes-d\'Armor',
+  '29': '29 – Finistère',
+  '35': '35 – Ille-et-Vilaine',
+  '56': '56 – Morbihan',
+};
 
-/** Données statiques par département */
-const deptData = [
-  {label:'35 – Ille-et-Vilaine', v:1437},
-  {label:'56 – Morbihan',        v:1318},
-  {label:'29 – Finistère',       v:698},
-  {label:'22 – Côtes-d\'Armor',  v:644},
-];
+/**
+ * Charge les stats depuis l'API et met à jour tous les éléments
+ * de la page d'accueil (cartes, graphiques, tableau, connecteurs).
+ */
+async function loadStats() {
+  let stats;
+  try {
+    const res = await fetch(`${API_BASE}/stats`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    stats = await res.json();
+  } catch (err) {
+    console.error('Erreur chargement stats :', err);
+    return;
+  }
 
-/** Données croisées année × département (extrait représentatif) */
-const crossData = [
-  {annee:'2016', d29:80, d22:60, d56:72, d35:61},
-  {annee:'2017', d29:75, d22:58, d56:80, d35:66},
-  {annee:'2018', d29:8,  d22:6,  d56:10, d35:12},
-  {annee:'2019', d29:12, d22:9,  d56:14, d35:21},
-  {annee:'2020', d29:5,  d22:4,  d56:6,  d35:10},
-  {annee:'2021', d29:22, d22:18, d56:28, d35:39},
-  {annee:'2022', d29:88, d22:72, d56:95, d35:133},
-  {annee:'2023', d29:210,d22:165,d56:215,d35:355},
-  {annee:'2024', d29:138,d22:110,d56:142,d35:233},
-  {annee:'2025', d29:120,d22:96, d56:125,d35:204},
-];
+  // ── Cartes chiffres ──────────────────────────────────────────
+  const total = stats.total ?? 0;
+  const elTotal = document.getElementById('stat-total');
+  if (elTotal) elTotal.textContent = total.toLocaleString('fr-FR');
+
+  const elTypes = document.getElementById('stat-types-prise');
+  if (elTypes) elTypes.textContent = (stats.types_prise ?? []).length;
+
+  const elAmen = document.getElementById('stat-amenageurs');
+  if (elAmen) elAmen.textContent = (stats.amenageurs ?? 0).toLocaleString('fr-FR');
+
+  const elDepts = document.getElementById('stat-depts');
+  if (elDepts) elDepts.textContent = stats.departements ?? 0;
+
+  // ── Graphiques ───────────────────────────────────────────────
+  buildYearChart(stats.par_annee  ?? []);
+  buildDeptChart(stats.par_dept   ?? []);
+  buildCrossTable(stats.croise    ?? []);
+  buildConnectors(stats.types_prise ?? []);
+}
 
 /**
  * Construit le graphique en barres "installations par année".
+ * @param {Array<{annee:string|number, nb:number}>} data
  */
-function buildYearChart() {
+function buildYearChart(data) {
   const container = document.getElementById('year-chart');
   if (!container) return;
-  const maxVal = Math.max(...yearData.map(d => d.v));
-  yearData.forEach(d => {
+  container.innerHTML = '';
+  const maxVal = Math.max(...data.map(d => +d.nb), 1);
+  data.forEach(d => {
     const row = document.createElement('div');
     row.className = 'bar-row';
     row.innerHTML = `
-      <span class="bar-label">${d.y}</span>
+      <span class="bar-label">${d.annee}</span>
       <div class="bar-track">
-        <div class="bar-fill" style="width:0%" data-w="${(d.v / maxVal) * 100}%"></div>
+        <div class="bar-fill" style="width:0%" data-w="${(+d.nb / maxVal) * 100}%"></div>
       </div>
-      <span class="bar-val">${d.v}</span>`;
+      <span class="bar-val">${(+d.nb).toLocaleString('fr-FR')}</span>`;
     container.appendChild(row);
   });
-  // Animation d'entrée
   setTimeout(() => {
-    container.querySelectorAll('.bar-fill').forEach(b => {
-      b.style.width = b.dataset.w;
-    });
+    container.querySelectorAll('.bar-fill').forEach(b => { b.style.width = b.dataset.w; });
   }, 200);
 }
 
 /**
  * Construit le graphique en barres "répartition par département".
+ * @param {Array<{code_dep:string, nb:number}>} data
  */
-function buildDeptChart() {
+function buildDeptChart(data) {
   const container = document.getElementById('dept-chart');
   if (!container) return;
-  const maxVal = Math.max(...deptData.map(d => d.v));
-  deptData.forEach(d => {
+  container.innerHTML = '';
+  const maxVal = Math.max(...data.map(d => +d.nb), 1);
+  data.forEach(d => {
+    const label = DEPT_LABELS[d.code_dep] ?? d.code_dep;
     const row = document.createElement('div');
     row.className = 'bar-row';
     row.innerHTML = `
-      <span class="bar-label-long">${d.label}</span>
+      <span class="bar-label-long">${label}</span>
       <div class="bar-track">
-        <div class="bar-fill" style="width:0%" data-w="${(d.v / maxVal) * 100}%"></div>
+        <div class="bar-fill" style="width:0%" data-w="${(+d.nb / maxVal) * 100}%"></div>
       </div>
-      <span class="bar-val">${d.v}</span>`;
+      <span class="bar-val">${(+d.nb).toLocaleString('fr-FR')}</span>`;
     container.appendChild(row);
   });
   setTimeout(() => {
-    container.querySelectorAll('.bar-fill').forEach(b => {
-      b.style.width = b.dataset.w;
-    });
+    container.querySelectorAll('.bar-fill').forEach(b => { b.style.width = b.dataset.w; });
   }, 300);
 }
 
 /**
  * Remplit le tableau croisé année × département.
+ * @param {Array<{annee:string|number, d22:number, d29:number, d35:number, d56:number}>} data
  */
-function buildCrossTable() {
+function buildCrossTable(data) {
   const tbody = document.querySelector('#cross-table tbody');
   if (!tbody) return;
-  crossData.forEach(row => {
+  tbody.innerHTML = '';
+  data.forEach(row => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${row.annee}</td>
-      <td>${row.d29}</td>
-      <td>${row.d22}</td>
-      <td>${row.d56}</td>
-      <td>${row.d35}</td>`;
+      <td>${(row.d29 ?? 0).toLocaleString('fr-FR')}</td>
+      <td>${(row.d22 ?? 0).toLocaleString('fr-FR')}</td>
+      <td>${(row.d56 ?? 0).toLocaleString('fr-FR')}</td>
+      <td>${(row.d35 ?? 0).toLocaleString('fr-FR')}</td>`;
     tbody.appendChild(tr);
+  });
+}
+
+/**
+ * Construit dynamiquement les cartes "types de prise".
+ * @param {Array<{type:string, nb:number, pct:number}>} data
+ */
+function buildConnectors(data) {
+  const container = document.querySelector('.connectors');
+  if (!container) return;
+  container.innerHTML = '';
+  const colors = ['', 'red', 'red', '', '', ''];
+  data.forEach((d, i) => {
+    const card = document.createElement('div');
+    card.className = 'connector-card' + (colors[i] ? ' ' + colors[i] : '');
+    card.innerHTML = `
+      <div class="cn">${d.nb.toLocaleString('fr-FR')}</div>
+      <div class="ct">${d.type}</div>
+      <div class="cp">${d.pct} %</div>`;
+    container.appendChild(card);
   });
 }
 
@@ -202,7 +237,10 @@ async function chargerSelect(selectId, url, labelKey, valueKey) {
 
   try {
     const reponse = await fetch(url);
-    if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+    if (!reponse.ok) {
+      const corps = await reponse.text();
+      throw new Error(`HTTP ${reponse.status} — ${corps}`);
+    }
     const donnees = await reponse.json();
 
     donnees.forEach(item => {
@@ -253,7 +291,10 @@ async function lancerRecherche() {
 
   try {
     const reponse = await fetch(url);
-    if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+    if (!reponse.ok) {
+      const corps = await reponse.text();
+      throw new Error(`HTTP ${reponse.status} — ${corps}`);
+    }
     const donnees = await reponse.json();
     afficherTableauResultats(donnees);
   } catch (err) {
@@ -277,16 +318,19 @@ function afficherTableauResultats(installations) {
   const countEl = document.getElementById('results-count');
 
   tbody.innerHTML = '';
-  countEl.textContent = `${installations.length} résultat(s)`;
+  const total    = installations.length;
+  const affichés = installations.slice(0, 20);
+  countEl.textContent = total > 20
+    ? `${total} résultats (20 affichés)`
+    : `${total} résultat(s)`;
 
-  installations.forEach(inst => {
+  affichés.forEach(inst => {
     // Formatage date : mois et année seulement
     const dateMES = formatDateMoisAnnee(inst.date_mise_en_service);
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${dateMES}</td>
-      <td>${inst.nbre_pdc ?? '—'}</td>
       <td>${inst.type_prise ?? '—'}</td>
       <td>${inst.puissance_nominale ? inst.puissance_nominale + ' kW' : '—'}</td>
       <td>${inst.commune ?? ''} ${inst.code_dept ? '(' + inst.code_dept + ')' : ''}</td>
@@ -326,7 +370,10 @@ function formatDateMoisAnnee(dateStr) {
 async function afficherDetail(id) {
   try {
     const reponse = await fetch(`${API_BASE}/installations/${id}`);
-    if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+    if (!reponse.ok) {
+      const corps = await reponse.text();
+      throw new Error(`HTTP ${reponse.status} — ${corps}`);
+    }
     const inst = await reponse.json();
     remplirPageDetail(inst);
   } catch (err) {
@@ -383,12 +430,14 @@ function initDetailMap(lat, lon, titre) {
     detailMapLeaflet = null;
   }
 
-  detailMapLeaflet = L.map('dp-map-container').setView([lat, lon], 15);
+  detailMapLeaflet = L.map('dp-map-container', { minZoom: 10 }).setView([lat, lon], 15);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
     maxZoom: 19
   }).addTo(detailMapLeaflet);
   L.marker([lat, lon]).addTo(detailMapLeaflet).bindPopup(titre).openPopup();
+  // Recalcule la taille au cas où le conteneur était caché lors de l'init
+  setTimeout(() => detailMapLeaflet && detailMapLeaflet.invalidateSize(), 150);
 }
 
 /* ============================================================
@@ -400,7 +449,7 @@ function initCarteLeaflet() {
   const container = document.getElementById('carte-leaflet-container');
   if (!container) return;
 
-  carteLeaflet = L.map('carte-leaflet-container').setView([48.15, -2.9], 8);
+  carteLeaflet = L.map('carte-leaflet-container', { minZoom: 8 }).setView([48.15, -2.9], 8);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 18
@@ -431,7 +480,10 @@ async function afficherCarte() {
 
   try {
     const reponse = await fetch(`${API_BASE}/installations/carte?${params.toString()}`);
-    if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+    if (!reponse.ok) {
+      const corps = await reponse.text();
+      throw new Error(`HTTP ${reponse.status} — ${corps}`);
+    }
     const points = await reponse.json();
     console.log(points)
     afficherMarqueurs(points);
@@ -443,40 +495,28 @@ async function afficherCarte() {
 
 /**
  * Ajoute les marqueurs sur la carte Leaflet.
- * Chaque marqueur comporte un popup (localité, puissance) et un lien vers le détail.
+ * Au clic sur un marqueur, ouvre le panneau latéral avec tous les PDC de la station.
  * @param {Array} points
  */
 function afficherMarqueurs(points) {
-  // Supprimer les marqueurs précédents
-  if (carteLeaflet._layers) {
-    carteLeaflet.eachLayer(layer => {
-      if (layer instanceof L.Marker) carteLeaflet.removeLayer(layer);
-    });
-  }
+  carteLeaflet.eachLayer(layer => {
+    if (layer instanceof L.Marker) carteLeaflet.removeLayer(layer);
+  });
 
   document.getElementById('carte-count').textContent = points.length;
-  console.log(points)
 
   points.forEach(pt => {
     const lat = parseFloat(pt.lat);
     const lon = parseFloat(pt.lon);
     if (isNaN(lat) || isNaN(lon)) return;
 
-    // Popup : station, nb PDC, puissance max, types de prise
-    const detailUrl = `recherche.html?detail=${pt.id ?? ''}`;
-    const popupHtml = `
-      <div style="font-family:sans-serif;min-width:160px;">
-        <strong>${pt.commune || '—'}</strong><br>
-        Points de charge : ${pt.nbre_pdc ?? '—'}<br>
-        Puissance max : ${pt.puissance_nominale ? pt.puissance_nominale + ' kW' : '—'}<br>
-        Types : ${pt.type_prise || '—'}<br>
-        ${pt.id ? `<a href="${detailUrl}" style="margin-top:6px;display:inline-block;">Voir le détail →</a>` : ''}
-      </div>`;
-
-    L.marker([lat, lon]).addTo(carteLeaflet).bindPopup(popupHtml);
+    const marker = L.marker([lat, lon]).addTo(carteLeaflet);
+    marker.bindTooltip(pt.commune || '—', { direction: 'top', offset: [0, -8] });
+    marker.on('click', () => ouvrirPanelStation(pt.station_id, pt.commune, lat, lon));
   });
 }
 
+<<<<<<< HEAD
 
 /* ================================================================
    FONCTIONNALITÉ ITINÉRAIRE
@@ -764,3 +804,64 @@ async function chercherItineraire() {
   }
 }
 
+=======
+/**
+ * Ouvre le panneau latéral et charge les PDC de la station.
+ * @param {string} stationId
+ * @param {string} nomStation
+ * @param {number} lat
+ * @param {number} lon
+ */
+async function ouvrirPanelStation(stationId, nomStation, lat, lon) {
+  const panel = document.getElementById('station-panel');
+  const title = document.getElementById('station-panel-title');
+  const list  = document.getElementById('station-panel-list');
+
+  title.textContent = nomStation || 'Station';
+  list.innerHTML = '<p class="panel-loading">Chargement…</p>';
+  panel.style.display = 'flex';
+  setTimeout(() => carteLeaflet && carteLeaflet.invalidateSize(), 50);
+
+  try {
+    const res = await fetch(`${API_BASE}/pdcs?station=${encodeURIComponent(stationId)}`);
+    if (!res.ok) {
+      const corps = await res.text();
+      throw new Error(`HTTP ${res.status} — ${corps}`);
+    }
+    const pdcs = await res.json();
+
+    list.innerHTML = '';
+    if (!pdcs.length) {
+      list.innerHTML = '<p class="panel-loading">Aucun point de charge.</p>';
+      return;
+    }
+
+    pdcs.forEach(pdc => {
+      const card = document.createElement('div');
+      card.className = 'pdc-card';
+      card.innerHTML = `
+        <div class="pdc-card-info">
+          <div class="pdc-type">${pdc.type_prise || '—'}</div>
+          <div class="pdc-meta">
+            ${pdc.puissance_nominale ? pdc.puissance_nominale + ' kW' : '—'}
+            ${pdc.acces_recharge ? ' · ' + pdc.acces_recharge : ''}
+          </div>
+          <div class="pdc-meta">${formatDateMoisAnnee(pdc.date_mise_service)}</div>
+        </div>
+        <a href="recherche.html?detail=${pdc.id}" class="btn-detail">Détail →</a>`;
+      list.appendChild(card);
+    });
+  } catch (err) {
+    list.innerHTML = '<p class="panel-loading">⚠ Erreur de chargement.</p>';
+    console.error('Erreur PDC station :', err);
+  }
+}
+
+/** Ferme le panneau latéral de la station. */
+function fermerPanelStation() {
+  const panel = document.getElementById('station-panel');
+  panel.style.display = 'none';
+  setTimeout(() => carteLeaflet && carteLeaflet.invalidateSize(), 50);
+}
+
+>>>>>>> 121c4424d7e6156290c85eebaaa2a47864d4c40f

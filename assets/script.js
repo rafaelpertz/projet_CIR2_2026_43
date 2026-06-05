@@ -14,7 +14,7 @@
 /* ============================================================
    CONFIGURATION API
    ============================================================ */
-const API_BASE = '/api'; // Racine de l'API PHP REST
+const API_BASE = 'api'; // Chemin relatif — fonctionne avec vhost et sous-dossier
 
 /* ============================================================
    NAVIGATION ENTRE PAGES
@@ -237,7 +237,10 @@ async function chargerSelect(selectId, url, labelKey, valueKey) {
 
   try {
     const reponse = await fetch(url);
-    if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+    if (!reponse.ok) {
+      const corps = await reponse.text();
+      throw new Error(`HTTP ${reponse.status} — ${corps}`);
+    }
     const donnees = await reponse.json();
 
     donnees.forEach(item => {
@@ -288,7 +291,10 @@ async function lancerRecherche() {
 
   try {
     const reponse = await fetch(url);
-    if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+    if (!reponse.ok) {
+      const corps = await reponse.text();
+      throw new Error(`HTTP ${reponse.status} — ${corps}`);
+    }
     const donnees = await reponse.json();
     afficherTableauResultats(donnees);
   } catch (err) {
@@ -312,16 +318,19 @@ function afficherTableauResultats(installations) {
   const countEl = document.getElementById('results-count');
 
   tbody.innerHTML = '';
-  countEl.textContent = `${installations.length} résultat(s)`;
+  const total    = installations.length;
+  const affichés = installations.slice(0, 20);
+  countEl.textContent = total > 20
+    ? `${total} résultats (20 affichés)`
+    : `${total} résultat(s)`;
 
-  installations.forEach(inst => {
+  affichés.forEach(inst => {
     // Formatage date : mois et année seulement
     const dateMES = formatDateMoisAnnee(inst.date_mise_en_service);
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${dateMES}</td>
-      <td>${inst.nbre_pdc ?? '—'}</td>
       <td>${inst.type_prise ?? '—'}</td>
       <td>${inst.puissance_nominale ? inst.puissance_nominale + ' kW' : '—'}</td>
       <td>${inst.commune ?? ''} ${inst.code_dept ? '(' + inst.code_dept + ')' : ''}</td>
@@ -361,7 +370,10 @@ function formatDateMoisAnnee(dateStr) {
 async function afficherDetail(id) {
   try {
     const reponse = await fetch(`${API_BASE}/installations/${id}`);
-    if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+    if (!reponse.ok) {
+      const corps = await reponse.text();
+      throw new Error(`HTTP ${reponse.status} — ${corps}`);
+    }
     const inst = await reponse.json();
     remplirPageDetail(inst);
   } catch (err) {
@@ -468,7 +480,10 @@ async function afficherCarte() {
 
   try {
     const reponse = await fetch(`${API_BASE}/installations/carte?${params.toString()}`);
-    if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+    if (!reponse.ok) {
+      const corps = await reponse.text();
+      throw new Error(`HTTP ${reponse.status} — ${corps}`);
+    }
     const points = await reponse.json();
     console.log(points)
     afficherMarqueurs(points);
@@ -480,37 +495,83 @@ async function afficherCarte() {
 
 /**
  * Ajoute les marqueurs sur la carte Leaflet.
- * Chaque marqueur comporte un popup (localité, puissance) et un lien vers le détail.
+ * Au clic sur un marqueur, ouvre le panneau latéral avec tous les PDC de la station.
  * @param {Array} points
  */
 function afficherMarqueurs(points) {
-  // Supprimer les marqueurs précédents
-  if (carteLeaflet._layers) {
-    carteLeaflet.eachLayer(layer => {
-      if (layer instanceof L.Marker) carteLeaflet.removeLayer(layer);
-    });
-  }
+  carteLeaflet.eachLayer(layer => {
+    if (layer instanceof L.Marker) carteLeaflet.removeLayer(layer);
+  });
 
   document.getElementById('carte-count').textContent = points.length;
-  console.log(points)
 
   points.forEach(pt => {
     const lat = parseFloat(pt.lat);
     const lon = parseFloat(pt.lon);
     if (isNaN(lat) || isNaN(lon)) return;
 
-    // Popup : station, nb PDC, puissance max, types de prise
-    const detailUrl = `recherche.html?detail=${pt.id ?? ''}`;
-    const popupHtml = `
-      <div style="font-family:sans-serif;min-width:160px;">
-        <strong>${pt.commune || '—'}</strong><br>
-        Points de charge : ${pt.nbre_pdc ?? '—'}<br>
-        Puissance max : ${pt.puissance_nominale ? pt.puissance_nominale + ' kW' : '—'}<br>
-        Types : ${pt.type_prise || '—'}<br>
-        ${pt.id ? `<a href="${detailUrl}" style="margin-top:6px;display:inline-block;">Voir le détail →</a>` : ''}
-      </div>`;
-
-    L.marker([lat, lon]).addTo(carteLeaflet).bindPopup(popupHtml);
+    const marker = L.marker([lat, lon]).addTo(carteLeaflet);
+    marker.bindTooltip(pt.commune || '—', { direction: 'top', offset: [0, -8] });
+    marker.on('click', () => ouvrirPanelStation(pt.station_id, pt.commune, lat, lon));
   });
+}
+
+/**
+ * Ouvre le panneau latéral et charge les PDC de la station.
+ * @param {string} stationId
+ * @param {string} nomStation
+ * @param {number} lat
+ * @param {number} lon
+ */
+async function ouvrirPanelStation(stationId, nomStation, lat, lon) {
+  const panel = document.getElementById('station-panel');
+  const title = document.getElementById('station-panel-title');
+  const list  = document.getElementById('station-panel-list');
+
+  title.textContent = nomStation || 'Station';
+  list.innerHTML = '<p class="panel-loading">Chargement…</p>';
+  panel.style.display = 'flex';
+  setTimeout(() => carteLeaflet && carteLeaflet.invalidateSize(), 50);
+
+  try {
+    const res = await fetch(`${API_BASE}/pdcs?station=${encodeURIComponent(stationId)}`);
+    if (!res.ok) {
+      const corps = await res.text();
+      throw new Error(`HTTP ${res.status} — ${corps}`);
+    }
+    const pdcs = await res.json();
+
+    list.innerHTML = '';
+    if (!pdcs.length) {
+      list.innerHTML = '<p class="panel-loading">Aucun point de charge.</p>';
+      return;
+    }
+
+    pdcs.forEach(pdc => {
+      const card = document.createElement('div');
+      card.className = 'pdc-card';
+      card.innerHTML = `
+        <div class="pdc-card-info">
+          <div class="pdc-type">${pdc.type_prise || '—'}</div>
+          <div class="pdc-meta">
+            ${pdc.puissance_nominale ? pdc.puissance_nominale + ' kW' : '—'}
+            ${pdc.acces_recharge ? ' · ' + pdc.acces_recharge : ''}
+          </div>
+          <div class="pdc-meta">${formatDateMoisAnnee(pdc.date_mise_service)}</div>
+        </div>
+        <a href="recherche.html?detail=${pdc.id}" class="btn-detail">Détail →</a>`;
+      list.appendChild(card);
+    });
+  } catch (err) {
+    list.innerHTML = '<p class="panel-loading">⚠ Erreur de chargement.</p>';
+    console.error('Erreur PDC station :', err);
+  }
+}
+
+/** Ferme le panneau latéral de la station. */
+function fermerPanelStation() {
+  const panel = document.getElementById('station-panel');
+  panel.style.display = 'none';
+  setTimeout(() => carteLeaflet && carteLeaflet.invalidateSize(), 50);
 }
 

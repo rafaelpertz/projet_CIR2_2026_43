@@ -120,20 +120,20 @@ try {
 
         $sql = '
             SELECT
+                s.id_station_locale                 AS station_id,
                 MIN(p.id_pdc)                       AS id,
                 s.latitude                          AS lat,
                 s.longitude                         AS lon,
                 s.nom_station                       AS commune,
                 COUNT(DISTINCT p.id_pdc)            AS nbre_pdc,
-                MAX(p.puissance_nominale)           AS puissance_nominale,
+                MAX(p.puissance_nominale)            AS puissance_nominale,
                 GROUP_CONCAT(DISTINCT tp.libelle_type_prise ORDER BY tp.libelle_type_prise SEPARATOR \', \') AS type_prise
             FROM station s
             INNER JOIN pdc p             ON p.id_station_locale = s.id_station_locale
             LEFT JOIN pdc_type_prise ptp ON ptp.id_pdc = p.id_pdc
             LEFT JOIN type_prise tp      ON tp.id_type_prise = ptp.id_type_prise
             WHERE ' . implode(' AND ', $where) . '
-            GROUP BY s.id_station_locale
-            LIMIT 2000';
+            GROUP BY s.id_station_locale';
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
@@ -243,10 +243,36 @@ try {
             LEFT JOIN type_prise tp        ON tp.id_type_prise = ptp.id_type_prise
         ';
         if ($where) $sql .= ' WHERE ' . implode(' AND ', $where);
-        $sql .= ' GROUP BY p.id_pdc ORDER BY p.date_mise_service DESC LIMIT 500';
+        $sql .= ' GROUP BY p.id_pdc ORDER BY p.date_mise_service DESC';
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
+        echo json_encode($stmt->fetchAll());
+        exit;
+    }
+
+    // GET /pdcs?station=<id_station_locale>
+    if ($path === '/pdcs') {
+        $station = $_GET['station'] ?? '';
+        if (empty($station)) { echo json_encode([]); exit; }
+
+        $stmt = $pdo->prepare('
+            SELECT
+                p.id_pdc                            AS id,
+                p.puissance_nominale,
+                p.date_mise_service,
+                p.gratuit,
+                ca.condition_acces                  AS acces_recharge,
+                GROUP_CONCAT(DISTINCT tp.libelle_type_prise ORDER BY tp.libelle_type_prise SEPARATOR \', \') AS type_prise
+            FROM pdc p
+            LEFT JOIN pdc_type_prise ptp  ON ptp.id_pdc     = p.id_pdc
+            LEFT JOIN type_prise tp       ON tp.id_type_prise = ptp.id_type_prise
+            LEFT JOIN condition_d_acces ca ON ca.id_condition = p.id_condition
+            WHERE p.id_station_locale = :station
+            GROUP BY p.id_pdc
+            ORDER BY p.id_pdc
+        ');
+        $stmt->execute([':station' => $station]);
         echo json_encode($stmt->fetchAll());
         exit;
     }

@@ -302,12 +302,255 @@ nav ul li a:hover { color: #fff; }
 /* ============================================================
    PAGE CARTE — Fonctionnalité 5
    ============================================================ */
-.map-section { background: var(--dark3); padding: 40px 60px; }
-.map-header { margin-bottom: 20px; }
+.map-section  { background: var(--dark3); padding: 40px 60px; }
+.map-header   { margin-bottom: 20px; }
 .map-header h2 { font-size: 1.4rem; font-weight: 900; }
-.map-header p { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
-.result-count { font-size: 2.5rem; font-weight: 900; color: #fff; margin: 8px 0; }
-.map-container { position: relative; background: #1a3a5c; border-radius: 8px; overflow: hidden; height: 500px; z-index: 0; }
+.map-header p  { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+
+/* Wrapper relatif : contient carte + panneau coulissant */
+.map-wrapper {
+  position: relative;
+  height: 580px;
+  border-radius: 8px;
+  overflow: hidden; /* clips la carte ET le panneau */
+}
+
+/* La carte Leaflet occupe tout le wrapper */
+.map-container {
+  position: absolute;
+  inset: 0;
+  background: #1a3a5c;
+  z-index: 0;
+}
+
+/* ============================================================
+   PANNEAU ITINÉRAIRE — Coulisse depuis la gauche
+   ============================================================ */
+.route-panel {
+  position: absolute;
+  top: 0; left: 0;
+  width: 310px;
+  height: 100%;
+  background: rgba(13, 13, 13, 0.97);
+  backdrop-filter: blur(10px);
+  z-index: 500;
+  transform: translateX(-310px);         /* caché par défaut */
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  border-right: 1px solid #2a2a2a;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.route-panel.open {
+  transform: translateX(0);             /* visible */
+  box-shadow: 6px 0 32px rgba(0,0,0,0.6);
+}
+
+/* En-tête du panneau */
+.route-panel-header {
+  padding: 20px 18px 14px;
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+.route-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.route-panel-icon { font-size: 1.5rem; }
+.route-panel-title strong { display: block; font-size: 1rem; color: #fff; font-weight: 700; }
+.route-panel-title span   { display: block; font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+/* Champs départ / arrivée (style Maps) */
+.route-inputs {
+  padding: 16px 18px 0;
+  flex-shrink: 0;
+}
+.route-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.route-input-row input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: #f0f0f0;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+.route-input-row input::placeholder { color: #666; }
+
+/* Point de couleur (●) à gauche de chaque input */
+.route-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.route-dot.green { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+.route-dot.red   { background: #e63946; box-shadow: 0 0 6px rgba(230,57,70,0.5); }
+
+/* Ligne verticale de connexion entre départ et arrivée */
+.route-connector-line {
+  width: 2px;
+  height: 14px;
+  background: linear-gradient(to bottom, #22c55e, #e63946);
+  margin: 4px 0 4px 20px;
+  border-radius: 2px;
+  opacity: 0.6;
+}
+
+/* Sélection du rayon */
+.route-rayon {
+  padding: 16px 18px 0;
+  flex-shrink: 0;
+}
+.route-rayon label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  margin-bottom: 8px;
+}
+.rayon-chips {
+  display: flex;
+  gap: 6px;
+}
+.rayon-chip {
+  flex: 1;
+  padding: 6px 0;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 20px;
+  color: #aaa;
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.rayon-chip:hover  { border-color: var(--red); color: #fff; }
+.rayon-chip.active { background: var(--red); border-color: var(--red); color: #fff; font-weight: 600; }
+
+/* Bouton de recherche */
+.route-search-btn {
+  margin: 16px 18px 0;
+  width: calc(100% - 36px);
+  padding: 12px;
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.route-search-btn:hover { background: #c0392b; }
+
+/* Statut (chargement, erreur) */
+.route-status {
+  margin: 12px 18px 0;
+  font-size: 0.8rem;
+  min-height: 18px;
+  flex-shrink: 0;
+}
+.route-status.loading { color: var(--muted); }
+.route-status.error   { color: #ff6b6b; }
+.route-status.warn    { color: #f59e0b; }
+
+/* Liste des résultats de l'itinéraire */
+.route-results {
+  padding: 0 18px 18px;
+  overflow-y: auto;
+  flex: 1;
+}
+.route-count {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  margin: 14px 0 8px;
+}
+.route-no-result {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-top: 14px;
+  line-height: 1.5;
+}
+.route-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.route-list-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 10px 12px;
+  transition: border-color 0.2s;
+}
+.route-list-item:hover { border-color: var(--red); }
+.route-item-icon { font-size: 1rem; flex-shrink: 0; }
+.route-item-info { flex: 1; min-width: 0; }
+.route-item-info strong { display: block; font-size: 0.82rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.route-item-info span   { display: block; font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+.route-item-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 1rem;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+.route-item-link:hover { color: var(--red); }
+
+/* ============================================================
+   BOUTON TOGGLE — Toujours visible sur le bord gauche
+   ============================================================ */
+.route-toggle {
+  position: absolute;
+  top: 16px;
+  left: 12px;
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(13,13,13,0.92);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  border: 1px solid #3a3a3a;
+  border-radius: 20px;
+  padding: 7px 14px 7px 10px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: left 0.32s cubic-bezier(0.4,0,0.2,1), background 0.2s, border-color 0.2s;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+.route-toggle:hover { background: var(--red); border-color: var(--red); }
+
+/* Quand le panneau est ouvert, le bouton se décale à droite du panneau */
+.route-toggle.panel-open {
+  left: 318px; /* 310px panel + 8px gap */
+}
+.route-toggle-arrow { font-size: 0.9rem; transition: transform 0.3s; }
+.route-toggle.panel-open .route-toggle-arrow { transform: rotate(180deg); }
+.route-toggle-label { letter-spacing: .4px; }
 
 /* ============================================================
    PIED DE PAGE (commun à toutes les pages front)

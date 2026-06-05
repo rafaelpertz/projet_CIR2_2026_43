@@ -117,6 +117,19 @@ try {
             $where[]  = 's.id_amenageur = :amenageur';
             $params[':amenageur'] = (int)$_GET['amenageur'];
         }
+        // Filtre bounding box : bbox=minLon,minLat,maxLon,maxLat
+        // Utilisé par la fonctionnalité itinéraire pour ne charger que la zone du trajet
+        if (!empty($_GET['bbox'])) {
+            $parts = array_map('floatval', explode(',', $_GET['bbox']));
+            if (count($parts) === 4) {
+                $where[] = 's.longitude BETWEEN :minLon AND :maxLon';
+                $where[] = 's.latitude  BETWEEN :minLat AND :maxLat';
+                $params[':minLon'] = $parts[0];
+                $params[':minLat'] = $parts[1];
+                $params[':maxLon'] = $parts[2];
+                $params[':maxLat'] = $parts[3];
+            }
+        }
 
         $sql = '
             SELECT

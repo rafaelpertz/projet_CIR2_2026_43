@@ -477,3 +477,290 @@ function afficherMarqueurs(points) {
   });
 }
 
+
+/* ================================================================
+   FONCTIONNALITÉ ITINÉRAIRE
+   Panneau coulissant + calcul de route OSRM + filtrage des bornes
+   ================================================================
+
+   APIs utilisées (gratuites, sans clé) :
+     - Nominatim (OpenStreetMap) : convertit un nom de ville en coordonnées GPS
+     - OSRM : calcule l'itinéraire routier entre deux points
+   ================================================================ */
+
+let routeLayerPolyline = null; // La ligne du trajet sur la carte
+let routeRayon         = 10;   // Rayon de recherche en km (modifié via setRayon())
+
+/**
+ * Ouvre ou ferme le panneau itinéraire.
+ * Déplace aussi le bouton toggle pour qu'il reste visible.
+ */
+function toggleRoutePanel() {
+  const panel  = document.getElementById('route-panel');
+  const toggle = document.getElementById('route-toggle');
+  const label  = document.getElementById('toggle-label');
+  const isOpen = panel.classList.toggle('open');
+
+  toggle.classList.toggle('panel-open', isOpen);
+  label.textContent = isOpen ? 'Fermer' : 'Itinéraire';
+}
+
+/**
+ * Sélectionne un rayon de recherche et met en surbrillance le chip actif.
+ * @param {number} km - Valeur en kilomètres (5, 10 ou 20)
+ */
+function setRayon(km) {
+  routeRayon = km;
+  document.querySelectorAll('.rayon-chip').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.km) === km);
+  });
+}
+
+/**
+ * Géocode un nom de ville en coordonnées GPS via Nominatim.
+ * On restreint la recherche à la France pour plus de précision.
+ * @param {string} nom - Nom de la ville (ex: "Brest")
+ * @returns {Promise<{lat, lon, label}>}
+ */
+async function geocoderVille(nom) {
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(nom + ', France')}&format=json&limit=1&accept-language=fr`;
+  const res  = await fetch(url, { headers: { 'User-Agent': 'BreizhOhm/1.0' } });
+  const data = await res.json();
+  if (!data.length) throw new Error(`Ville introuvable : "${nom}"`);
+  return {
+    lat:   parseFloat(data[0].lat),
+    lon:   parseFloat(data[0].lon),
+    label: data[0].display_name.split(',')[0].trim(),
+  };
+}
+
+/**
+ * Calcule l'itinéraire routier entre deux points via OSRM.
+ * OSRM est gratuit, open source et ne nécessite pas de clé API.
+ * @returns {Promise<Array>} Tableau de coordonnées [[lon, lat], ...]
+ */
+async function calculerRoute(depart, arrivee) {
+  const url = [
+    'https://router.project-osrm.org/route/v1/driving/',
+    `${depart.lon},${depart.lat};${arrivee.lon},${arrivee.lat}`,
+    '?geometries=geojson&overview=full',
+  ].join('');
+
+  const res  = await fetch(url);
+  const data = await res.json();
+  if (data.code !== 'Ok') throw new Error('Impossible de calculer cet itinéraire.');
+
+  // Retourne les coordonnées au format [[lon, lat], ...]
+  return data.routes[0].geometry.coordinates;
+}
+
+/**
+ * Calcule la distance en km entre deux points GPS (formule de Haversine).
+ */
+function haversine(lat1, lon1, lat2, lon2) {
+  const R  = 6371;
+  const φ1 = lat1 * Math.PI / 180;
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lon2 - lon1) * Math.PI / 180;
+  const a  = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/**
+ * Distance minimale d'un point à un segment de droite [A, B].
+ * Projection du point sur le segment, clampée entre A et B.
+ * @returns {number} Distance en km
+ */
+function distancePointSegment(pLat, pLon, aLat, aLon, bLat, bLon) {
+  const dx   = bLon - aLon;
+  const dy   = bLat - aLat;
+  const len2 = dx * dx + dy * dy;
+
+  // Segment dégénéré (A = B) : distance simple
+  if (len2 === 0) return haversine(pLat, pLon, aLat, aLon);
+
+  // Paramètre t de la projection (entre 0 et 1 = sur le segment)
+  const t = Math.max(0, Math.min(1, ((pLon - aLon) * dx + (pLat - aLat) * dy) / len2));
+
+  // Point le plus proche sur le segment
+  return haversine(pLat, pLon, aLat + t * dy, aLon + t * dx);
+}
+
+/**
+ * Filtre les bornes dont la distance minimale au tracé est ≤ rayon.
+ * On itère sur chaque segment de la polyline de la route.
+ * @param {Array} bornes       - Tableau de bornes [{lat, lon, ...}]
+ * @param {Array} routeCoords  - [[lon, lat], ...] retourné par OSRM
+ * @param {number} rayon       - Rayon en km
+ * @returns {Array} Bornes filtrées
+ */
+function filtrerBornesSurRoute(bornes, routeCoords, rayon) {
+  return bornes.filter(b => {
+    const lat = parseFloat(b.lat);
+    const lon = parseFloat(b.lon);
+    if (isNaN(lat) || isNaN(lon)) return false;
+
+    // Dès qu'on trouve un segment proche, on inclut la borne
+    for (let i = 0; i < routeCoords.length - 1; i++) {
+      const [aLon, aLat] = routeCoords[i];
+      const [bLon, bLat] = routeCoords[i + 1];
+      if (distancePointSegment(lat, lon, aLat, aLon, bLat, bLon) <= rayon) {
+        return true;
+      }
+    }
+    return false;
+  });
+}
+
+/**
+ * Affiche le tracé de la route sur la carte + marqueurs départ/arrivée.
+ * Supprime l'ancien tracé s'il existait.
+ */
+function afficherTrace(routeCoords, ptDepart, ptArrivee) {
+  if (!carteLeaflet) initCarteLeaflet();
+
+  // Supprimer l'ancien tracé
+  if (routeLayerPolyline) carteLeaflet.removeLayer(routeLayerPolyline);
+
+  // OSRM retourne [lon, lat] → Leaflet attend [lat, lon]
+  const latlngs = routeCoords.map(([lon, lat]) => [lat, lon]);
+
+  routeLayerPolyline = L.polyline(latlngs, {
+    color:   '#e63946',
+    weight:  5,
+    opacity: 0.85,
+  }).addTo(carteLeaflet);
+
+  // Icônes colorées pour départ (vert) et arrivée (rouge)
+  const makeIcon = color => L.divIcon({
+    className: '',
+    html: `<div style="
+      width:14px;height:14px;border-radius:50%;
+      background:${color};border:3px solid #fff;
+      box-shadow:0 2px 8px rgba(0,0,0,0.5)"></div>`,
+    iconAnchor: [7, 7],
+  });
+
+  L.marker([ptDepart.lat,  ptDepart.lon],  { icon: makeIcon('#22c55e') })
+    .addTo(carteLeaflet)
+    .bindPopup(`<b>Départ :</b> ${ptDepart.label}`);
+
+  L.marker([ptArrivee.lat, ptArrivee.lon], { icon: makeIcon('#e63946') })
+    .addTo(carteLeaflet)
+    .bindPopup(`<b>Arrivée :</b> ${ptArrivee.label}`);
+
+  // Centrer la vue sur toute la route
+  carteLeaflet.fitBounds(routeLayerPolyline.getBounds(), { padding: [40, 40] });
+}
+
+/**
+ * Met à jour le message de statut dans le panneau.
+ * @param {string} msg  - Message à afficher ('' pour effacer)
+ * @param {string} type - 'loading' | 'error' | 'warn' | ''
+ */
+function setRouteStatus(msg, type = '') {
+  const el = document.getElementById('route-status');
+  el.textContent   = msg;
+  el.className     = 'route-status ' + type;
+}
+
+/**
+ * Affiche la liste des bornes trouvées dans le panneau.
+ */
+function afficherResultatsRoute(bornes) {
+  const el = document.getElementById('route-results');
+
+  if (!bornes.length) {
+    el.innerHTML = `<p class="route-no-result">
+      Aucune borne trouvée à moins de ${routeRayon} km de ce trajet.<br>
+      Essayez d'augmenter le rayon de recherche.
+    </p>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="route-count">${bornes.length} borne${bornes.length > 1 ? 's' : ''} sur le trajet</div>
+    <ul class="route-list">
+      ${bornes.map(b => `
+        <li class="route-list-item">
+          <span class="route-item-icon">⚡</span>
+          <div class="route-item-info">
+            <strong>${b.commune || '—'}</strong>
+            <span>${b.puissance_nominale ? b.puissance_nominale + ' kW' : '—'} · ${b.type_prise || '—'}</span>
+          </div>
+          ${b.id ? `<a href="recherche.html?detail=${b.id}" class="route-item-link" title="Voir le détail">→</a>` : ''}
+        </li>
+      `).join('')}
+    </ul>`;
+}
+
+/**
+ * Fonction principale déclenchée par le bouton "Trouver les bornes".
+ * Enchaîne : géocodage → route OSRM → fetch bornes (bbox) → filtrage → affichage.
+ */
+async function chercherItineraire() {
+  const depart  = document.getElementById('route-depart').value.trim();
+  const arrivee = document.getElementById('route-arrivee').value.trim();
+
+  if (!depart || !arrivee) {
+    setRouteStatus('⚠ Veuillez saisir un départ et une arrivée.', 'warn');
+    return;
+  }
+
+  document.getElementById('route-results').innerHTML = '';
+  setRouteStatus('Géocodage des villes…', 'loading');
+
+  try {
+    // ── Étape 1 : convertir les noms de ville en coordonnées GPS ──
+    const ptDepart  = await geocoderVille(depart);
+    const ptArrivee = await geocoderVille(arrivee);
+
+    setRouteStatus('Calcul de l\'itinéraire…', 'loading');
+
+    // ── Étape 2 : calculer le tracé via OSRM ──
+    const routeCoords = await calculerRoute(ptDepart, ptArrivee);
+
+    // ── Étape 3 : afficher le tracé sur la carte ──
+    // Supprimer les anciens marqueurs avant de tracer la route
+    carteLeaflet.eachLayer(layer => {
+      if (layer instanceof L.Marker || layer instanceof L.Polyline) {
+        carteLeaflet.removeLayer(layer);
+      }
+    });
+    afficherTrace(routeCoords, ptDepart, ptArrivee);
+
+    setRouteStatus('Chargement des bornes…', 'loading');
+
+    // ── Étape 4 : bounding box du tracé + buffer de 0.15° (~15 km) ──
+    // On récupère uniquement les bornes dans cette zone pour limiter
+    // le volume de données envoyé par l'API.
+    const lats   = routeCoords.map(c => c[1]);
+    const lons   = routeCoords.map(c => c[0]);
+    const buffer = 0.15; // ~15 km de marge
+    const bbox   = [
+      Math.min(...lons) - buffer,  // minLon
+      Math.min(...lats) - buffer,  // minLat
+      Math.max(...lons) + buffer,  // maxLon
+      Math.max(...lats) + buffer,  // maxLat
+    ].join(',');
+
+    const res    = await fetch(`${API_BASE}/installations/carte?bbox=${bbox}`);
+    const bornes = await res.json();
+
+    // ── Étape 5 : filtrer les bornes réellement proches de la route ──
+    const bornesFiltrees = filtrerBornesSurRoute(bornes, routeCoords, routeRayon);
+
+    // ── Étape 6 : afficher les marqueurs sur la carte ──
+    afficherMarqueurs(bornesFiltrees);
+    document.getElementById('carte-count').textContent = bornesFiltrees.length;
+
+    // ── Étape 7 : afficher la liste dans le panneau ──
+    afficherResultatsRoute(bornesFiltrees);
+    setRouteStatus('', '');
+
+  } catch (err) {
+    setRouteStatus('❌ ' + err.message, 'error');
+  }
+}
+

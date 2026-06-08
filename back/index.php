@@ -53,7 +53,7 @@
         <!-- Boutons d'action principaux — liens vers les formulaires CRUD -->
         <div class="hero-btns">
           <a class="btn-hero" href="breizh_creation.php">Ajouter un point de charge</a>
-          <a class="btn-hero" href="breizh_modification.php">Modifier un point de charge</a>
+          <a class="btn-hero" href="breizh_detail.php">Modifier un point de charge</a>
         </div>
       </div>
     </div>

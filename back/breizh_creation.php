@@ -8,7 +8,11 @@
 //    conformément à l'architecture REST du cahier des charges.
 // ============================================================
 
-// URL de base de l'API (calculée dynamiquement pour tous les environnements)
+function e($valeur): string {
+    return (string)($valeur ?? '');
+}
+
+$champs  = [];
 $apiBase = rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'])), '/') . '/api';
 ?>
 <!DOCTYPE html>

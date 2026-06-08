@@ -11,9 +11,17 @@
  */
 
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../back/php/IRVEModel.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+
+// Répondre aux pré-vols CORS
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
+
+$method = $_SERVER['REQUEST_METHOD'];
 
 // ── Routing ──────────────────────────────────────────────────
 $uri    = $_SERVER['REQUEST_URI'];
@@ -362,6 +370,37 @@ try {
             'croise'      => $croise,
             'types_prise' => $typesPrise,
         ]);
+        exit;
+    }
+
+    // ── POST /installations → création ────────────────────────
+    if ($method === 'POST' && $path === '/installations') {
+        $data  = json_decode(file_get_contents('php://input'), true) ?? [];
+        $model = new IRVEModel();
+        $newId = $model->create($data);
+        http_response_code(201);
+        echo json_encode(['success' => true, 'id' => $newId]);
+        exit;
+    }
+
+    // ── PUT /installations/{id} → modification ────────────────
+    if ($method === 'PUT' && preg_match('#^/installations/(\d+)$#', $path, $m)) {
+        $id   = (int)$m[1];
+        $data = json_decode(file_get_contents('php://input'), true) ?? [];
+        $model = new IRVEModel();
+        $ok   = $model->update($id, $data);
+        if (!$ok) { http_response_code(404); echo json_encode(['error' => 'Not found']); exit; }
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
+    // ── DELETE /installations/{id} → suppression ──────────────
+    if ($method === 'DELETE' && preg_match('#^/installations/(\d+)$#', $path, $m)) {
+        $id   = (int)$m[1];
+        $model = new IRVEModel();
+        $ok   = $model->delete($id);
+        if (!$ok) { http_response_code(404); echo json_encode(['error' => 'Not found']); exit; }
+        echo json_encode(['success' => true]);
         exit;
     }
 

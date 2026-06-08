@@ -3,10 +3,9 @@
 //  breizh_modification.php — Modification ou suppression
 //
 //  Fonctionnement :
-//    GET                  → charge les données de l'id et pré-remplit le formulaire
-//    POST _action=update  → met à jour en base et redirige vers le détail
-//    POST _action=delete  → demande confirmation (étape intermédiaire)
-//    POST _action=delete_confirm → supprime en base et redirige vers la liste
+//    GET → charge les données du PDC et pré-remplit le formulaire
+//    La modification appelle PUT  /api/installations/{id} (REST)
+//    La suppression appelle DELETE /api/installations/{id} (REST)
 //
 //  Paramètre URL requis : ?id=X  (identifiant du PDC à modifier)
 // ============================================================
@@ -17,82 +16,15 @@ function e($valeur): string {
     return (string)($valeur ?? '');
 }
 
-$model = new IRVEModel();
+$model   = new IRVEModel();
+$apiBase = rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'])), '/') . '/api';
 
-// Récupère l'id depuis l'URL ou depuis un champ caché du formulaire
-$id = isset($_GET['id'])  ? (int)$_GET['id']  :
-     (isset($_POST['id']) ? (int)$_POST['id'] : 0);
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-$erreur          = '';     // Message d'erreur à afficher
-$confirmer_suppr = false;  // Afficher la confirmation de suppression ?
-$champs          = [];     // Valeurs du formulaire
-
-// ---- Traitement POST ----
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-    $action = $_POST['_action'] ?? '';
-
-    // --- Mise à jour ---
-    if ($action === 'update') {
-
-        $champs = [
-            'nom_amenageur'        => trim($_POST['nom_amenageur']        ?? ''),
-            'siren_amenageur'      => trim($_POST['siren_amenageur']      ?? ''),
-            'contact_amenageur'    => trim($_POST['contact_amenageur']    ?? ''),
-            'nom_operateur'        => trim($_POST['nom_operateur']        ?? ''),
-            'nom_commune'          => trim($_POST['nom_commune']          ?? ''),
-            'nbre_pdc'             => trim($_POST['nbre_pdc']             ?? ''),
-            'type_prise'           => trim($_POST['type_prise']           ?? ''),
-            'puissance_nominale'   => trim($_POST['puissance_nominale']   ?? ''),
-            'date_mise_en_service' => trim($_POST['date_mise_en_service'] ?? ''),
-        ];
-
-        if ($champs['nom_amenageur'] === '') {
-            $erreur = 'Le champ « Nom aménageur » est obligatoire.';
-        }
-
-        if ($erreur === '') {
-            $data = [
-                'nom_amenageur'        => $champs['nom_amenageur'],
-                'siren_amenageur'      => $champs['siren_amenageur'],
-                'contact_amenageur'    => $champs['contact_amenageur'],
-                'nom_operateur'        => $champs['nom_operateur'],
-                'nom_commune'          => $champs['nom_commune'],
-                'nbre_pdc'             => (int)$champs['nbre_pdc'] ?: null,
-                'type_prise'           => $champs['type_prise'],
-                'puissance_nominale'   => $champs['puissance_nominale'] !== '' ? (float)$champs['puissance_nominale'] : null,
-                'date_mise_en_service' => $champs['date_mise_en_service'] !== '' ? $champs['date_mise_en_service'] : null,
-            ];
-            $model->update($id, $data);
-
-            // Redirection vers le détail après mise à jour réussie
-            header('Location: breizh_detail.php?id=' . $id);
-            exit;
-        }
-    }
-
-    // --- Demande de confirmation de suppression ---
-    if ($action === 'delete') {
-        // On ne supprime pas encore : on affiche une demande de confirmation
-        $confirmer_suppr = true;
-    }
-
-    // --- Suppression confirmée ---
-    if ($action === 'delete_confirm') {
-        $model->delete($id);
-
-        // Redirection vers la liste après suppression
-        header('Location: breizh_liste.php');
-        exit;
-    }
-}
-
-// ---- Chargement des données existantes (GET ou POST avec erreur) ----
-// On charge l'item depuis la base seulement si $champs est vide
-// (sinon on garde ce que l'utilisateur avait saisi)
-$item = ($id > 0) ? $model->getById($id) : null;
-
-if (empty($champs) && $item) {
+// Chargement des données existantes (GET uniquement)
+$item   = ($id > 0) ? $model->getById($id) : null;
+$champs = [];
+if ($item) {
     $champs = [
         'nom_amenageur'        => $item['nom_amenageur']        ?? '',
         'siren_amenageur'      => $item['siren_amenageur']      ?? '',
@@ -141,55 +73,32 @@ if (empty($champs) && $item) {
         <div class="form-wrap">
 
           <?php if (!$item && $id > 0): ?>
-            <!-- L'id fourni ne correspond à rien en base -->
             <p style="color:#e74c3c;">Aucune installation trouvée pour l'identifiant <?= e($id) ?>.</p>
             <a class="btn btn-outline" href="breizh_liste.php">← Retour à la liste</a>
 
           <?php elseif (!$item): ?>
-            <!-- Aucun id dans l'URL -->
             <p style="color:#aaa;">Aucun identifiant fourni. Accédez via la liste ou le détail.</p>
             <a class="btn btn-outline" href="breizh_liste.php">← Voir la liste</a>
 
           <?php else: ?>
 
-            <!-- ================================================
-                 CONFIRMATION DE SUPPRESSION
-                 Affichée quand l'utilisateur clique "Supprimer"
-            ================================================ -->
-            <?php if ($confirmer_suppr): ?>
-              <div style="padding:16px;background:#fde8e8;border-radius:8px;margin-bottom:20px;border:1px solid #fca5a5;">
-                <p style="color:#c0392b;font-weight:600;margin-bottom:12px;">
-                  Supprimer définitivement cette installation ?
-                </p>
-                <div style="display:flex;gap:10px;">
-                  <!-- Confirme la suppression -->
-                  <form method="POST" action="breizh_modification.php?id=<?= e($id) ?>" style="display:inline;">
-                    <input type="hidden" name="id" value="<?= e($id) ?>"/>
-                    <input type="hidden" name="_action" value="delete_confirm"/>
-                    <button type="submit" class="btn" style="background:#c0392b;color:#fff;border:none;">
-                      Oui, supprimer
-                    </button>
-                  </form>
-                  <!-- Annule et retourne au formulaire -->
-                  <a class="btn btn-outline" href="breizh_modification.php?id=<?= e($id) ?>">Non, annuler</a>
-                </div>
+            <!-- Confirmation de suppression (affichée/masquée par JS) -->
+            <div id="confirm-suppr" style="display:none;padding:16px;background:#fde8e8;border-radius:8px;margin-bottom:20px;border:1px solid #fca5a5;">
+              <p style="color:#c0392b;font-weight:600;margin-bottom:12px;">Supprimer définitivement cette installation ?</p>
+              <div style="display:flex;gap:10px;">
+                <button id="btn-confirm-delete" class="btn" style="background:#c0392b;color:#fff;border:none;">Oui, supprimer</button>
+                <button id="btn-annuler-delete" class="btn btn-outline" type="button">Non, annuler</button>
               </div>
-            <?php endif; ?>
+            </div>
 
-            <!-- Message d'erreur de validation -->
-            <?php if ($erreur !== ''): ?>
-              <div style="padding:10px 14px;border-radius:8px;margin-bottom:16px;font-size:14px;background:#fde8e8;color:#c0392b;">
-                <?= e($erreur) ?>
-              </div>
-            <?php endif; ?>
+            <!-- Message d'erreur (injecté par JS) -->
+            <div id="msg-erreur" style="display:none;padding:10px 14px;border-radius:8px;margin-bottom:16px;font-size:14px;background:#fde8e8;color:#c0392b;"></div>
 
             <!-- ================================================
                  FORMULAIRE DE MODIFICATION
-                 Soumis en POST avec _action=update
+                 Soumis via fetch → PUT /api/installations/{id}
             ================================================ -->
-            <form method="POST" action="breizh_modification.php?id=<?= e($id) ?>">
-              <input type="hidden" name="id" value="<?= e($id) ?>"/>
-              <input type="hidden" name="_action" value="update"/>
+            <form id="form-modif" method="POST" action="#">
 
               <div class="form-row">
                 <div class="form-group">
@@ -256,25 +165,16 @@ if (empty($champs) && $item) {
               </div>
 
               <div class="form-actions" style="justify-content:space-between;">
-                <div><!-- Le bouton Supprimer est dans son propre formulaire ci-dessous --></div>
+                <!-- Bouton Supprimer : déclenche la confirmation via JS -->
+                <button id="btn-supprimer" type="button" class="btn" style="background:#fde8e8;color:#c0392b;border:1px solid #fca5a5;">
+                  Supprimer
+                </button>
                 <div style="display:flex;gap:10px;">
                   <a class="btn btn-outline" href="breizh_detail.php?id=<?= e($id) ?>">Annuler</a>
-                  <button type="submit" class="btn btn-primary">Enregistrer</button>
+                  <button type="submit" id="btn-enregistrer" class="btn btn-primary">Enregistrer</button>
                 </div>
               </div>
 
-            </form>
-
-            <!-- ================================================
-                 FORMULAIRE DE SUPPRESSION (séparé du formulaire
-                 de modification pour avoir une action distincte)
-            ================================================ -->
-            <form method="POST" action="breizh_modification.php?id=<?= e($id) ?>" style="margin-top:10px;">
-              <input type="hidden" name="id" value="<?= e($id) ?>"/>
-              <input type="hidden" name="_action" value="delete"/>
-              <button type="submit" class="btn" style="background:#fde8e8;color:#c0392b;border:1px solid #fca5a5;">
-                Supprimer
-              </button>
             </form>
 
           <?php endif; ?>
@@ -292,5 +192,107 @@ if (empty($champs) && $item) {
   </footer>
 </div>
 
+<script>
+const API_BASE    = '<?= $apiBase ?>';
+const RECORD_ID   = <?= (int)$id ?>;
+const msgErreur   = document.getElementById('msg-erreur');
+const confirmBox  = document.getElementById('confirm-suppr');
+
+// ── Modification : PUT /api/installations/{id} ────────────────
+const formModif = document.getElementById('form-modif');
+if (formModif) {
+    formModif.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        msgErreur.style.display = 'none';
+
+        const get = name => document.querySelector('[name="' + name + '"]')?.value?.trim() ?? '';
+
+        if (!get('nom_amenageur')) return afficherErreur('Le champ « Nom aménageur » est obligatoire.');
+
+        const payload = {
+            nom_amenageur:        get('nom_amenageur'),
+            siren_amenageur:      get('siren_amenageur')      || null,
+            contact_amenageur:    get('contact_amenageur')    || null,
+            nom_operateur:        get('nom_operateur'),
+            nom_commune:          get('nom_commune'),
+            nbre_pdc:             parseInt(get('nbre_pdc'))   || null,
+            type_prise:           get('type_prise'),
+            puissance_nominale:   get('puissance_nominale')   ? parseFloat(get('puissance_nominale')) : null,
+            date_mise_en_service: get('date_mise_en_service') || null,
+        };
+
+        const btn = document.getElementById('btn-enregistrer');
+        btn.disabled = true;
+        btn.textContent = 'Enregistrement…';
+
+        try {
+            // PUT /api/installations/{id} — conforme REST (modification)
+            const resp = await fetch(API_BASE + '/installations/' + RECORD_ID, {
+                method:  'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify(payload),
+            });
+            const json = await resp.json();
+
+            if (!resp.ok || !json.success) {
+                afficherErreur(json.error ?? 'Erreur lors de la mise à jour.');
+            } else {
+                window.location.href = 'breizh_detail.php?id=' + RECORD_ID;
+            }
+        } catch (err) {
+            afficherErreur('Impossible de contacter l\'API : ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Enregistrer';
+        }
+    });
+}
+
+// ── Suppression : DELETE /api/installations/{id} ──────────────
+const btnSuppr = document.getElementById('btn-supprimer');
+if (btnSuppr) {
+    // Étape 1 : afficher la confirmation
+    btnSuppr.addEventListener('click', () => {
+        confirmBox.style.display = 'block';
+        confirmBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+}
+
+const btnAnnulerDelete = document.getElementById('btn-annuler-delete');
+if (btnAnnulerDelete) {
+    btnAnnulerDelete.addEventListener('click', () => { confirmBox.style.display = 'none'; });
+}
+
+const btnConfirmDelete = document.getElementById('btn-confirm-delete');
+if (btnConfirmDelete) {
+    btnConfirmDelete.addEventListener('click', async () => {
+        btnConfirmDelete.disabled = true;
+        btnConfirmDelete.textContent = 'Suppression…';
+
+        try {
+            // DELETE /api/installations/{id} — conforme REST (suppression)
+            const resp = await fetch(API_BASE + '/installations/' + RECORD_ID, {
+                method: 'DELETE',
+            });
+            const json = await resp.json();
+
+            if (!resp.ok || !json.success) {
+                confirmBox.style.display = 'none';
+                afficherErreur(json.error ?? 'Erreur lors de la suppression.');
+            } else {
+                window.location.href = 'breizh_liste.php';
+            }
+        } catch (err) {
+            afficherErreur('Impossible de contacter l\'API : ' + err.message);
+        }
+    });
+}
+
+function afficherErreur(msg) {
+    msgErreur.textContent = msg;
+    msgErreur.style.display = 'block';
+    msgErreur.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
 </body>
 </html>

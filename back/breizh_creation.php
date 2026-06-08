@@ -3,93 +3,13 @@
 //  breizh_creation.php — Ajout d'une nouvelle installation
 //
 //  Fonctionnement :
-//    GET  → affiche le formulaire vide
-//    POST → valide les données, insère en base, redirige vers le détail
-//
-//  En cas d'erreur de validation : le formulaire est réaffiché
-//  avec un message d'erreur ($erreur) et les valeurs saisies
-//  conservées ($champs) pour ne pas forcer l'utilisateur à tout resaisir.
+//    GET → affiche le formulaire vide
+//    La soumission est gérée côté client via fetch (POST /api/installations)
+//    conformément à l'architecture REST du cahier des charges.
 // ============================================================
 
-require_once 'php/IRVEModel.php';
-
-function e($valeur): string {
-    return (string)($valeur ?? '');
-}
-
-$erreur = '';   // Message d'erreur à afficher dans le formulaire
-$champs = [];   // Valeurs saisies à réafficher en cas d'erreur
-
-// ---- Traitement du formulaire soumis ----
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-    // Récupère et nettoie chaque champ envoyé
-    $champs = [
-        'nom_amenageur'           => trim($_POST['nom_amenageur']           ?? ''),
-        'siren_amenageur'         => trim($_POST['siren_amenageur']         ?? ''),
-        'contact_amenageur'       => trim($_POST['contact_amenageur']       ?? ''),
-        'nom_operateur'           => trim($_POST['nom_operateur']           ?? ''),
-        'contact_operateur'       => trim($_POST['contact_operateur']       ?? ''),
-        'tel_operateur'           => trim($_POST['tel_operateur']           ?? ''),
-        'id_station_itinerance'   => trim($_POST['id_station_itinerance']   ?? ''),
-        'nom_commune'             => trim($_POST['nom_commune']             ?? ''),
-        'adresse_station'         => trim($_POST['adresse_station']         ?? ''),
-        'code_insee'              => trim($_POST['code_insee']              ?? ''),
-        'nbre_pdc'                => trim($_POST['nbre_pdc']                ?? ''),
-        'type_prise'              => trim($_POST['type_prise']              ?? ''),
-        'puissance_nominale'      => trim($_POST['puissance_nominale']      ?? ''),
-        'date_mise_en_service'    => trim($_POST['date_mise_en_service']    ?? ''),
-        'acces_recharge'          => trim($_POST['acces_recharge']          ?? ''),
-        'lat'                     => trim($_POST['lat']                     ?? ''),
-        'lng'                     => trim($_POST['lng']                     ?? ''),
-    ];
-
-    // Validation des champs obligatoires
-    if ($champs['nom_amenageur'] === '') {
-        $erreur = 'Le champ « Nom aménageur » est obligatoire.';
-    } elseif ($champs['nom_operateur'] === '') {
-        $erreur = 'Le champ « Nom opérateur » est obligatoire.';
-    } elseif ($champs['nom_commune'] === '') {
-        $erreur = 'Le champ « Commune » est obligatoire.';
-    } elseif ($champs['nbre_pdc'] === '' || (int)$champs['nbre_pdc'] < 1) {
-        $erreur = 'Le champ « Nombre de PDC » est obligatoire (minimum 1).';
-    } elseif ($champs['type_prise'] === '') {
-        $erreur = 'Le champ « Type de prise » est obligatoire.';
-    }
-
-    // Si tout est valide → insertion en base puis redirection
-    if ($erreur === '') {
-        // Construit le tableau de données attendu par IRVEModel::create()
-        $data = [
-            'nom_amenageur'         => $champs['nom_amenageur'],
-            'siren_amenageur'       => $champs['siren_amenageur'],
-            'contact_amenageur'     => $champs['contact_amenageur'],
-            'nom_operateur'         => $champs['nom_operateur'],
-            'contact_operateur'     => $champs['contact_operateur']     !== '' ? $champs['contact_operateur']     : null,
-            'tel_operateur'         => $champs['tel_operateur']         !== '' ? $champs['tel_operateur']         : null,
-            'id_station_itinerance' => $champs['id_station_itinerance'] !== '' ? $champs['id_station_itinerance'] : null,
-            'nom_commune'           => $champs['nom_commune'],
-            'adresse_station'       => $champs['adresse_station']       !== '' ? $champs['adresse_station']       : null,
-            'code_insee'            => $champs['code_insee']            !== '' ? $champs['code_insee']            : null,
-            'nbre_pdc'              => (int)$champs['nbre_pdc'],
-            'type_prise'            => $champs['type_prise'],
-            'puissance_nominale'    => $champs['puissance_nominale']    !== '' ? (float)$champs['puissance_nominale'] : null,
-            'date_mise_en_service'  => $champs['date_mise_en_service']  !== '' ? $champs['date_mise_en_service']  : null,
-            'acces_recharge'        => $champs['acces_recharge']        !== '' ? $champs['acces_recharge']        : null,
-            // Coordonnées au format "lng,lat" attendu par le modèle
-            'coordonneesXY'         => ($champs['lng'] !== '' && $champs['lat'] !== '')
-                                         ? $champs['lng'] . ',' . $champs['lat']
-                                         : null,
-        ];
-
-        $model = new IRVEModel();
-        $nouvel_id = $model->create($data);
-
-        // Redirection vers le détail de la nouvelle installation
-        header('Location: breizh_detail.php?id=' . $nouvel_id);
-        exit;
-    }
-}
+// URL de base de l'API (calculée dynamiquement pour tous les environnements)
+$apiBase = rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'])), '/') . '/api';
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -125,19 +45,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <!-- ====================================================
              FORMULAIRE DE CRÉATION
-             Soumis en POST vers cette même page.
-             En cas d'erreur, le formulaire est réaffiché avec
-             les valeurs déjà saisies et le message d'erreur.
+             Soumis via fetch → POST /api/installations (REST)
         ==================================================== -->
         <div class="form-wrap">
-          <form method="POST" action="breizh_creation.php">
+          <form id="form-creation" method="POST" action="breizh_creation.php">
 
-            <!-- Message d'erreur (visible uniquement si $erreur est non vide) -->
-            <?php if ($erreur !== ''): ?>
-              <div style="padding:10px 14px;border-radius:8px;margin-bottom:16px;font-size:14px;background:#fde8e8;color:#c0392b;">
-                <?= e($erreur) ?>
-              </div>
-            <?php endif; ?>
+            <!-- Message d'erreur (injecté par JS) -->
+            <div id="msg-erreur" style="display:none;padding:10px 14px;border-radius:8px;margin-bottom:16px;font-size:14px;background:#fde8e8;color:#c0392b;"></div>
 
             <div class="form-row">
               <div class="form-group">
@@ -255,9 +169,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div class="form-actions">
-              <!-- Annuler = retour à la liste sans soumettre -->
               <a class="btn btn-outline" href="breizh_liste.php">Annuler</a>
-              <button type="submit" class="btn btn-primary">Enregistrer l'installation</button>
+              <button type="submit" class="btn btn-primary" id="btn-submit">Enregistrer l'installation</button>
             </div>
 
           </form>
@@ -275,5 +188,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </footer>
 </div>
 
+<script>
+// URL de l'API injectée par PHP
+const API_BASE = '<?= $apiBase ?>';
+
+document.getElementById('form-creation').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const msgErreur = document.getElementById('msg-erreur');
+    const btn       = document.getElementById('btn-submit');
+    msgErreur.style.display = 'none';
+
+    // Lecture des champs
+    const get = id => document.querySelector('[name="' + id + '"]')?.value?.trim() ?? '';
+
+    // Validation côté client
+    if (!get('nom_amenageur'))                       return afficherErreur('Le champ « Nom aménageur » est obligatoire.');
+    if (!get('nom_operateur'))                       return afficherErreur('Le champ « Nom opérateur » est obligatoire.');
+    if (!get('nom_commune'))                         return afficherErreur('Le champ « Commune » est obligatoire.');
+    if (!get('nbre_pdc') || parseInt(get('nbre_pdc')) < 1) return afficherErreur('Le champ « Nombre de PDC » est obligatoire (minimum 1).');
+    if (!get('type_prise'))                          return afficherErreur('Le champ « Type de prise » est obligatoire.');
+
+    // Construction du payload
+    const lat = get('lat'), lng = get('lng');
+    const payload = {
+        nom_amenageur:         get('nom_amenageur'),
+        siren_amenageur:       get('siren_amenageur')       || null,
+        contact_amenageur:     get('contact_amenageur')     || null,
+        nom_operateur:         get('nom_operateur'),
+        contact_operateur:     get('contact_operateur')     || null,
+        tel_operateur:         get('tel_operateur')         || null,
+        id_station_itinerance: get('id_station_itinerance') || null,
+        nom_commune:           get('nom_commune'),
+        adresse_station:       get('adresse_station')       || null,
+        code_insee:            get('code_insee')            || null,
+        nbre_pdc:              parseInt(get('nbre_pdc')),
+        type_prise:            get('type_prise'),
+        puissance_nominale:    get('puissance_nominale')    ? parseFloat(get('puissance_nominale')) : null,
+        date_mise_en_service:  get('date_mise_en_service')  || null,
+        acces_recharge:        get('acces_recharge')        || null,
+        coordonneesXY:         (lng && lat) ? lng + ',' + lat : null,
+    };
+
+    btn.disabled = true;
+    btn.textContent = 'Enregistrement…';
+
+    try {
+        // POST /api/installations — conforme REST (ajout de données)
+        const resp = await fetch(API_BASE + '/installations', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+        });
+
+        const json = await resp.json();
+
+        if (!resp.ok || !json.success) {
+            afficherErreur(json.error ?? 'Erreur lors de l\'enregistrement.');
+        } else {
+            // Redirection vers le détail de la nouvelle installation
+            window.location.href = 'breizh_detail.php?id=' + json.id;
+        }
+    } catch (err) {
+        afficherErreur('Impossible de contacter l\'API : ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Enregistrer l\'installation';
+    }
+
+    function afficherErreur(msg) {
+        msgErreur.textContent = msg;
+        msgErreur.style.display = 'block';
+        msgErreur.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+});
+</script>
 </body>
 </html>

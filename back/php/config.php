@@ -4,10 +4,8 @@
 //  À modifier selon votre environnement (VM, WAMP, XAMPP…)
 // ============================================================
 
-define('DB_HOST', 'localhost');   // Adresse du serveur MariaDB
-define('DB_NAME', 'breizhohm');     // Nom de votre base de données
-
-define('DB_USER', 'breizhohm');   // Utilisateur MariaDB
-define('DB_PASS', 'breizhohm');   // Mot de passe MariaDB
-
-define('DB_CHARSET', 'utf8mb4');
+defined('DB_HOST')    || define('DB_HOST',    'localhost');
+defined('DB_NAME')    || define('DB_NAME',    'breizhohm');
+defined('DB_USER')    || define('DB_USER',    'breizhohm');
+defined('DB_PASS')    || define('DB_PASS',    'breizhohm');
+defined('DB_CHARSET') || define('DB_CHARSET', 'utf8mb4');

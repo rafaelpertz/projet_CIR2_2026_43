@@ -110,9 +110,9 @@
 <!-- Carte Leaflet + Panneau itinéraire -->
 <section class="map-section">
   <div class="map-header">
-
     <h2>Bornes affichées : <span id="carte-count">—</span></h2>
-    <p>Cliquez sur un marqueur pour voir les informations. Utilisez le panneau <strong>Itinéraire</strong> pour trouver les bornes sur votre route.</p>
+    <p>Cliquez sur un marqueur pour voir les points de charge de la station.
+       Utilisez le panneau <strong>Itinéraire</strong> pour trouver les bornes sur votre route.</p>
   </div>
 
   <!-- Wrapper relatif qui contient la carte + le panneau coulissant -->
@@ -180,18 +180,9 @@
     <!-- La carte Leaflet -->
     <div id="carte-leaflet-container" class="map-container"></div>
 
-  </div>
-  <!-- fin .map-wrapper -->
-
-=======
-    <h2>Bornes affichées :</h2>
-    <p>Cliquez sur un marqueur pour voir les points de charge de la station.</p>
-    <div class="result-count" id="carte-count">—</div>
-  </div>
-  <div class="map-and-panel">
-    <div class="map-container" id="carte-leaflet-container"></div>
-
-    <!-- Panneau station -->
+    <!-- =====================================================
+         PANNEAU STATION (coulisse depuis la droite au clic)
+    ===================================================== -->
     <div id="station-panel" class="station-panel" style="display:none;">
       <div class="station-panel-head">
         <h3 id="station-panel-title">Station</h3>
@@ -199,8 +190,9 @@
       </div>
       <div id="station-panel-list" class="station-panel-list"></div>
     </div>
+
   </div>
->>>>>>> 121c4424d7e6156290c85eebaaa2a47864d4c40f
+  <!-- fin .map-wrapper -->
 </section>
 
 <!-- footer -->

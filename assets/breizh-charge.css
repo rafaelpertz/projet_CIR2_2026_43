@@ -598,6 +598,69 @@ nav ul li a:hover { color: #fff; }
 
 
 /* ============================================================
+   POPUP LEAFLET — thème sombre
+   ============================================================ */
+.leaflet-popup-content-wrapper {
+  background: var(--dark2);
+  color: var(--text);
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+  padding: 0;
+  overflow: hidden;
+}
+.leaflet-popup-content {
+  margin: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  line-height: 1.4;
+  min-width: 240px;
+}
+.leaflet-popup-tip-container .leaflet-popup-tip {
+  background: var(--dark2);
+  box-shadow: none;
+}
+.leaflet-popup-close-button {
+  color: var(--muted) !important;
+  top: 10px !important;
+  right: 10px !important;
+  font-size: 18px !important;
+  width: 20px !important;
+  height: 20px !important;
+  line-height: 20px !important;
+  transition: color .2s;
+}
+.leaflet-popup-close-button:hover { color: var(--red) !important; background: none !important; }
+
+/* Contenu du popup station */
+.popup-station { padding: 16px 18px; }
+.popup-station-title {
+  font-size: 0.95rem; font-weight: 700; color: var(--text);
+  margin-bottom: 3px; padding-right: 20px;
+}
+.popup-pdc-count {
+  font-size: 0.7rem; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .8px; margin-bottom: 12px;
+}
+.popup-pdc-item {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 10px; padding: 8px 0; border-bottom: 1px solid #2a2a2a;
+}
+.popup-pdc-item:last-child { border-bottom: none; padding-bottom: 0; }
+.popup-pdc-info { flex: 1; min-width: 0; }
+.popup-pdc-type { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+.popup-pdc-meta { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+.popup-pdc-date { font-size: 0.68rem; color: #555; margin-top: 2px; }
+.popup-pdc-link {
+  white-space: nowrap; font-size: 0.75rem; padding: 4px 10px;
+  background: var(--red); color: #fff; border-radius: 3px;
+  text-decoration: none; flex-shrink: 0;
+  font-weight: 600; transition: opacity .2s;
+}
+.popup-pdc-link:hover { opacity: 0.85; }
+.popup-loading { padding: 14px 18px; font-size: 0.85rem; color: var(--muted); }
+.popup-error   { padding: 14px 18px; font-size: 0.85rem; color: #ff6b6b; }
+
+/* ============================================================
    PIED DE PAGE (commun à toutes les pages front)
    ============================================================ */
 footer {

@@ -79,7 +79,7 @@
     </div>
   </footer>
 
-</div><!-- /.page-wrapper -->
+</div>
 
 </body>
 </html>

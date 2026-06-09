@@ -58,7 +58,7 @@ function e($valeur): string {
         <table>
           <thead>
             <tr>
-              <th>#</th><th>Aménageur</th><th>Opérateur</th><th>Commune</th>
+              <th>Aménageur</th><th>Opérateur</th><th>Commune</th>
               <th>Nb PDC</th><th>Type prise</th><th>Puissance</th><th>Actions</th>
             </tr>
           </thead>
@@ -74,7 +74,6 @@ function e($valeur): string {
               <!-- On parcourt chaque installation et on génère une ligne -->
               <?php foreach ($liste as $row): ?>
                 <tr>
-                  <td><?= e($row['id']) ?></td>
                   <td><?= e($row['nom_amenageur']) ?></td>
                   <td><?= e($row['nom_operateur']) ?></td>
                   <td><?= e($row['nom_commune']) ?></td>

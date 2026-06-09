@@ -271,35 +271,48 @@ class IRVEModel {
 
             // --- Mise à jour de l'opérateur ---
             $stmt = $this->db->prepare(
-                "UPDATE operateur SET nom_operateur = :nom WHERE id_operateur = :id"
+                "UPDATE operateur
+                 SET nom_operateur = :nom, contact_operateur = :contact, tel_operateur = :tel
+                 WHERE id_operateur = :id"
             );
             $stmt->execute([
-                ':nom' => $data['nom_operateur'],
-                ':id'  => $row['id_operateur'],
+                ':nom'     => $data['nom_operateur'],
+                ':contact' => $data['contact_operateur'] ?? null,
+                ':tel'     => $data['tel_operateur']     ?? null,
+                ':id'      => $row['id_operateur'],
             ]);
 
-            // --- Mise à jour de la station (nom + code INSEE) ---
+            // --- Mise à jour de la station ---
+            [$lng, $lat] = $this->parseCoords($data['coordonneesXY'] ?? '');
             $stmt = $this->db->prepare(
-                "UPDATE station SET nom_station = :nom, code_insee = :code
+                "UPDATE station
+                 SET nom_station = :nom, code_insee = :code, adresse_station = :adresse,
+                     id_station_itinerance = :id_iti, longitude = :lng, latitude = :lat
                  WHERE id_station_locale = :id"
             );
             $stmt->execute([
-                ':nom'  => $data['nom_commune'],
-                ':code' => $data['code_insee'] ?? null,
-                ':id'   => $row['id_station_locale'],
+                ':nom'    => $data['nom_commune'],
+                ':code'   => $data['code_insee']            ?? null,
+                ':adresse'=> $data['adresse_station']       ?? null,
+                ':id_iti' => $data['id_station_itinerance'] ?? null,
+                ':lng'    => $lng,
+                ':lat'    => $lat,
+                ':id'     => $row['id_station_locale'],
             ]);
 
             // --- Mise à jour de TOUS les PDC de la station ---
             // On cible id_station_locale et non id_pdc pour propager
             // le changement à toutes les bornes du site.
+            $id_condition = $this->getOrCreateCondition($data['acces_recharge'] ?? '');
             $stmt = $this->db->prepare(
                 "UPDATE pdc
-                 SET puissance_nominale = :puissance, date_mise_service = :date
+                 SET puissance_nominale = :puissance, date_mise_service = :date, id_condition = :id_cond
                  WHERE id_station_locale = :id_sl"
             );
             $stmt->execute([
                 ':puissance' => !empty($data['puissance_nominale']) ? (float) $data['puissance_nominale'] : null,
                 ':date'      => !empty($data['date_mise_en_service']) ? $data['date_mise_en_service'] : null,
+                ':id_cond'   => $id_condition,
                 ':id_sl'     => $row['id_station_locale'],
             ]);
 

@@ -163,7 +163,7 @@ try {
     }
 
     // GET /installations/{id}
-    if (preg_match('#^/installations/(\d+)$#', $path, $m)) {
+    if ($method === 'GET' && preg_match('#^/installations/(\d+)$#', $path, $m)) {
         $id   = (int)$m[1];
         $stmt = $pdo->prepare('
             SELECT
@@ -264,7 +264,13 @@ try {
             LEFT JOIN type_prise tp        ON tp.id_type_prise = ptp.id_type_prise
         ';
         if ($where) $sql .= ' WHERE ' . implode(' AND ', $where);
-        $sql .= ' GROUP BY p.id_pdc ORDER BY p.date_mise_service DESC';
+        $sql .= ' GROUP BY p.id_pdc';
+
+        $random = isset($_GET['random']) && $_GET['random'] == '1';
+        $sql .= $random ? ' ORDER BY RAND()' : ' ORDER BY p.date_mise_service DESC';
+
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 0;
+        if ($limit > 0) $sql .= " LIMIT $limit";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);

@@ -4,17 +4,57 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BreizhOhm – Recherche</title>
+
+<!-- Favicon -->
 <link rel="icon" type="image/png" sizes="32x32" href="assets/logo_breizh_charge_groupe43_v2.png">
+
+<!-- CSS global de l'application -->
 <link rel="stylesheet" href="assets/breizh-charge.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<!--
+  Leaflet 1.9.4 — bibliothèque cartographique open-source.
+  La CSS positionne la carte et les contrôles Leaflet (zoom, attribution).
+  Le JS expose l'objet global L utilisé dans recherche.js pour créer la
+  mini-carte de la page de détail (initDetailMap).
+-->
+<link  rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!--
+  recherche.js — Script de la page Recherche (defer : exécuté après parsing DOM).
+
+  Au DOMContentLoaded (ligne 17), le script vérifie data-page="recherche" puis :
+    1. Appelle chargerFiltresRecherche() qui peuple les cinq <select> via l'API :
+         #sel-amenageur  ← GET api/amenageurs?limit=20&random=1
+         #sel-operateur  ← GET api/operateurs
+         #sel-prise      ← GET api/types-prise
+         #sel-dept       ← GET api/departements
+         #sel-acces      ← GET api/conditions-acces
+       Chaque appel passe par chargerSelect(id, url, labelKey, valueKey).
+    2. Lit le paramètre URL ?detail=<id> : si présent, appelle afficherDetail(id)
+       directement pour permettre un lien profond vers une installation.
+       → recherche.js lignes 17-26
+
+  Navigation interne : la page contient DEUX sous-vues (#page-search et
+  #page-detail). showPage(name) bascule entre elles via classList active.
+  → recherche.js lignes 32-39
+-->
 <script src="assets/recherche.js" defer></script>
 </head>
+
+<!--
+  data-page="recherche" : lu par recherche.js pour conditionner l'init.
+  (même mécanisme que data-page="home" dans index.html)
+-->
 <body data-page="recherche">
 
-<!-- entête -->
+<!-- =====================================================================
+     BARRE DE NAVIGATION (identique aux autres pages)
+     La classe "active" est sur le lien "Recherche".
+====================================================================== -->
 <nav>
   <div class="logo">
+    <!-- Le logo est un lien vers l'accueil sur les pages secondaires -->
     <a href="index.html" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
       <div class="logo-icon">
         <img id="nav-logo" src="assets/logo_breizh_charge_groupe43_v2.png" alt="Logo BreizhOhm">
@@ -33,9 +73,16 @@
   <a class="nav-cta" href="recherche.html">TROUVER UNE BORNE</a>
 </nav>
 
-<!-- recherche -->
+<!-- =====================================================================
+     SOUS-VUE "RECHERCHE" (#page-search)
+     Visible par défaut (class="page active").
+     Masquée par showPage('detail') quand l'utilisateur clique "Voir le détail".
+     Réaffichée par le bouton "← Retour" dans #page-detail.
+     → recherche.js showPage() lignes 32-39
+====================================================================== -->
 <div id="page-search" class="page active">
 
+  <!-- Hero de la page recherche — purement statique -->
   <div class="search-hero">
     <div class="search-hero-content">
       <h1>Rechercher une borne de recharge</h1>
@@ -44,7 +91,31 @@
     </div>
   </div>
 
-  <!-- formulaire -->
+  <!-- -------------------------------------------------------------------
+       FORMULAIRE DE FILTRES
+       Les champs sont lus dans lancerRecherche() (recherche.js lignes 84-122)
+       au clic du bouton RECHERCHER (onclick="lancerRecherche()").
+
+       Champs texte / numériques (valeur lue via .value.trim()) :
+         #sel-nom          → paramètre "nom"           (recherche par nom de station)
+         #sel-puissance-min → paramètre "puissance_min" (puissance mini en kW)
+
+       Listes déroulantes (<select>) peuplées dynamiquement au chargement
+       par chargerFiltresRecherche() → chargerSelect() :
+         #sel-amenageur  → paramètre "amenageur"  (id de l'aménageur)
+         #sel-operateur  → paramètre "operateur"  (id de l'opérateur)
+         #sel-prise      → paramètre "prise"      (id du type de prise)
+         #sel-dept       → paramètre "dept"       (code du département)
+         #sel-acces      → paramètre "acces"      (id de la condition d'accès)
+
+       Listes déroulantes statiques (options codées en dur) :
+         #sel-gratuit    → paramètre "gratuit"    ("1" = gratuit, "0" = payant)
+
+       Tous les paramètres non vides sont assemblés en QueryString et
+       envoyés en GET api/installations?... → réponse JSON transmise à
+       afficherTableauResultats().
+       → recherche.js lancerRecherche() lignes 84-122
+  -------------------------------------------------------------------- -->
   <section class="criteria-section">
     <div class="criteria-header">
       <h2>Sélectionnez vos critères :</h2>
@@ -60,50 +131,73 @@
     </div>
 
     <div class="search-form">
+
+      <!-- Champ texte libre : recherche par nom d'enseigne / station -->
       <div class="form-field">
         <label for="sel-nom">Nom de la station</label>
         <div class="input-icon-wrap">
+          <!-- Icône loupe SVG inline (pas de dépendance externe) -->
           <span class="input-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
           <input type="text" id="sel-nom" placeholder="ex : Carrefour, Lidl…">
         </div>
       </div>
+
+      <!--
+        <select> peuplé dynamiquement par chargerSelect('sel-amenageur', ...)
+        L'option "— Tous —" (value="") est toujours présente par défaut ;
+        les options issues de l'API sont ajoutées après.
+        → recherche.js chargerSelect() lignes 53-78
+      -->
       <div class="form-field">
         <label for="sel-amenageur">Aménageur</label>
         <select id="sel-amenageur">
           <option value="">— Tous —</option>
         </select>
       </div>
+
+      <!-- Peuplé par GET api/operateurs via chargerSelect() -->
       <div class="form-field">
         <label for="sel-operateur">Opérateur</label>
         <select id="sel-operateur">
           <option value="">— Tous —</option>
         </select>
       </div>
+
+      <!-- Peuplé par GET api/types-prise via chargerSelect() -->
       <div class="form-field">
         <label for="sel-prise">Type de prise</label>
         <select id="sel-prise">
           <option value="">— Tous —</option>
         </select>
       </div>
+
+      <!-- Peuplé par GET api/departements via chargerSelect() -->
       <div class="form-field">
         <label for="sel-dept">Département</label>
         <select id="sel-dept">
           <option value="">— Tous —</option>
         </select>
       </div>
+
+      <!-- Champ numérique : filtre sur puissance_nominale >= valeur saisie -->
       <div class="form-field">
         <label for="sel-puissance-min">Puissance min (kW)</label>
         <div class="input-icon-wrap">
+          <!-- Icône éclair SVG inline -->
           <span class="input-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
           <input type="number" id="sel-puissance-min" min="0" step="1" placeholder="ex : 22">
         </div>
       </div>
+
+      <!-- Peuplé par GET api/conditions-acces via chargerSelect() -->
       <div class="form-field">
         <label for="sel-acces">Accès recharge</label>
         <select id="sel-acces">
           <option value="">— Tous —</option>
         </select>
       </div>
+
+      <!-- Options statiques : pas besoin d'API, uniquement deux valeurs possibles -->
       <div class="form-field">
         <label for="sel-gratuit">Tarification</label>
         <select id="sel-gratuit">
@@ -113,11 +207,34 @@
         </select>
       </div>
 
+      <!--
+        Bouton de déclenchement :
+        onclick="lancerRecherche()" → collecte tous les filtres, construit
+        l'URL api/installations?..., fetch() les résultats JSON, puis appelle
+        afficherTableauResultats() pour peupler le tableau ci-dessous.
+        → recherche.js lancerRecherche() lignes 84-122
+      -->
       <button class="validate-btn" onclick="lancerRecherche()">RECHERCHER</button>
     </div>
   </section>
 
-  <!-- tableau resultat -->
+  <!-- -------------------------------------------------------------------
+       TABLEAU DE RÉSULTATS
+       Masqué par défaut (style="display:none"), rendu visible par
+       afficherTableauResultats() après réception des données.
+       → recherche.js afficherTableauResultats() lignes 124-155
+
+       #results-count   → badge affichant "X résultat(s)" ou "X (20 affichés)"
+                          (max 20 lignes visibles, mais total réel affiché)
+       #results-tbody   → corps du tableau peuplé par des <tr> créés dynamiquement.
+         Chaque ligne contient :
+           - Date de mise en service (formatée MM/YYYY via formatDateMoisAnnee())
+           - Type de prise
+           - Puissance (kW)
+           - Localisation (commune + code département)
+           - Bouton "Voir le détail" → onclick="afficherDetail(inst.id)"
+             qui appelle GET api/installations/:id et bascule vers #page-detail.
+  -------------------------------------------------------------------- -->
   <section class="results-section" id="results-section" style="display:none;">
     <div class="results-header">
       <h2>Résultats</h2>
@@ -135,61 +252,120 @@
             <th>Détails</th>
           </tr>
         </thead>
+        <!--
+          tbody vide : peuplé par afficherTableauResultats() dans recherche.js.
+          Chaque <tr> inclut un bouton onclick="afficherDetail(id)" qui
+          lance GET api/installations/:id puis showPage('detail').
+          → recherche.js lignes 136-154
+        -->
         <tbody id="results-tbody">
-          <!-- Rempli dynamiquement par script.js -->
         </tbody>
       </table>
     </div>
   </section>
 
-  <!-- footer -->
   <footer>
     <p>© 2026 <span>BreizhOhm</span> — Rafael Touzé & Florian Muller — Partenaire — Groupe 13 · CIR2 2026 · ISEN Ouest</p>
   </footer>
 </div>
+<!-- fin #page-search -->
 
-<!-- details -->
+<!-- =====================================================================
+     SOUS-VUE "DÉTAIL" (#page-detail)
+     Masquée par défaut (pas de class="active").
+     Activée par showPage('detail') après qu'afficherDetail(id) a rempli
+     les champs ci-dessous depuis GET api/installations/:id.
+     → recherche.js afficherDetail() lignes 168-182
+                     remplirPageDetail()  lignes 184-207
+
+     Tous les éléments #dp-* sont mis à jour par setText(id, valeur) :
+       une fonction utilitaire (lignes 210-213) qui fait simplement
+       document.getElementById(id).textContent = val ?? '—'.
+
+     La mini-carte Leaflet est initialisée dans #dp-map-container via
+     initDetailMap(lat, lon, titre) si les coordonnées GPS sont disponibles.
+     → recherche.js initDetailMap() lignes 215-231
+====================================================================== -->
 <div id="page-detail" class="page">
 
   <div class="detail-page-wrapper">
+
+    <!--
+      Bouton retour : onclick="showPage('search')" remplace la classe "active"
+      sur #page-search et supprime celle de #page-detail.
+      → recherche.js showPage() lignes 32-39
+    -->
     <div class="detail-back">
       <button class="btn-back" onclick="showPage('search')">← Retour aux résultats</button>
     </div>
 
+    <!--
+      Titre dynamique : mis à jour par remplirPageDetail() avec la valeur
+      "Détail — <nom_enseigne || nom_amenageur || 'Installation #id'>".
+      → recherche.js ligne 185-187
+    -->
     <h2 id="dp-title">Détail de l'installation</h2>
 
     <div class="detail-card">
       <div class="detail-info">
+
+        <!-- Bloc "Informations générales" -->
         <h3>Informations générales</h3>
+        <!-- #dp-amenageur ← inst.nom_amenageur -->
         <div class="detail-row"><div class="dr-label">Aménageur</div><div class="dr-val" id="dp-amenageur"></div></div>
+        <!-- #dp-operateur ← inst.nom_operateur -->
         <div class="detail-row"><div class="dr-label">Opérateur</div><div class="dr-val" id="dp-operateur"></div></div>
+        <!-- #dp-enseigne  ← inst.nom_enseigne -->
         <div class="detail-row"><div class="dr-label">Enseigne</div><div class="dr-val" id="dp-enseigne"></div></div>
+        <!-- #dp-id-station ← inst.id_station -->
         <div class="detail-row"><div class="dr-label">ID station</div><div class="dr-val" id="dp-id-station"></div></div>
 
+        <!-- Bloc "Caractéristiques" -->
         <h3 style="margin-top:20px;">Caractéristiques</h3>
+        <!-- #dp-date     ← formatDateMoisAnnee(inst.date_mise_en_service) → MM/YYYY -->
         <div class="detail-row"><div class="dr-label">Date de mise en service</div><div class="dr-val" id="dp-date"></div></div>
-<div class="detail-row"><div class="dr-label">Type de prise</div><div class="dr-val" id="dp-prise"></div></div>
+        <!-- #dp-prise    ← inst.type_prise -->
+        <div class="detail-row"><div class="dr-label">Type de prise</div><div class="dr-val" id="dp-prise"></div></div>
+        <!-- #dp-puissance ← inst.puissance_nominale + ' kW' ou '—' -->
         <div class="detail-row"><div class="dr-label">Puissance nominale</div><div class="dr-val" id="dp-puissance"></div></div>
+        <!-- #dp-acces    ← inst.acces_recharge -->
         <div class="detail-row"><div class="dr-label">Accès recharge</div><div class="dr-val" id="dp-acces"></div></div>
+        <!-- #dp-horaires ← inst.horaires -->
         <div class="detail-row"><div class="dr-label">Horaires</div><div class="dr-val" id="dp-horaires"></div></div>
 
+        <!-- Bloc "Localisation" -->
         <h3 style="margin-top:20px;">Localisation</h3>
+        <!-- #dp-adresse  ← inst.adresse_station -->
         <div class="detail-row"><div class="dr-label">Adresse</div><div class="dr-val" id="dp-adresse"></div></div>
+        <!-- #dp-commune  ← inst.commune -->
         <div class="detail-row"><div class="dr-label">Commune</div><div class="dr-val" id="dp-commune"></div></div>
+        <!-- #dp-dept     ← DEPT_LABELS[code_dept] ou code_dept + ' – ' + nom_dept -->
         <div class="detail-row"><div class="dr-label">Département</div><div class="dr-val" id="dp-dept"></div></div>
+        <!-- #dp-coords   ← "lat, lon" si coordonnées disponibles, sinon '—' -->
         <div class="detail-row"><div class="dr-label">Coordonnées GPS</div><div class="dr-val" id="dp-coords"></div></div>
       </div>
 
-      <!-- carte -->
+      <!--
+        Conteneur de la mini-carte Leaflet.
+        Initialisé par initDetailMap(lat, lon, titre) dans remplirPageDetail()
+        si les coordonnées GPS (coordonneesXY_lat / coordonneesXY_lon) sont valides.
+        L'appel est retardé de 100 ms (setTimeout) pour garantir que le panneau
+        est visible avant que Leaflet calcule la taille du conteneur.
+        Si une carte existait déjà (navigation précédente), elle est détruite
+        (detailMapLeaflet.remove()) avant d'en créer une nouvelle, pour éviter
+        les conflits d'instances Leaflet.
+        → recherche.js initDetailMap() lignes 215-231
+        Variable globale : detailMapLeaflet (ligne 15)
+      -->
       <div class="detail-map" id="dp-map-container"></div>
     </div>
   </div>
 
-  <!-- footer -->
   <footer>
     <p>© 2026 <span>BreizhOhm</span> — Rafael Touzé & Florian Muller — Groupe 13 · CIR2 2026 · ISEN Ouest</p>
   </footer>
 </div>
+<!-- fin #page-detail -->
 
 </body>
 </html>

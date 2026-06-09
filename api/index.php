@@ -33,7 +33,7 @@ try {
     $pdo = getDB();
 
     // GET /amenageurs
-    if ($path === '/amenageurs') {
+    if ($method === 'GET' && $path === '/amenageurs') {
         $limit  = isset($_GET['limit'])  ? (int)$_GET['limit']  : 0;
         $random = isset($_GET['random']) && $_GET['random'] == '1';
 
@@ -47,7 +47,7 @@ try {
     }
 
     // GET /types-prise
-    if ($path === '/types-prise') {
+    if ($method === 'GET' && $path === '/types-prise') {
         $rows = $pdo->query(
             'SELECT id_type_prise AS id, libelle_type_prise AS libelle FROM type_prise ORDER BY libelle_type_prise'
         )->fetchAll();
@@ -56,7 +56,7 @@ try {
     }
 
     // GET /operateurs
-    if ($path === '/operateurs') {
+    if ($method === 'GET' && $path === '/operateurs') {
         $rows = $pdo->query(
             'SELECT id_operateur AS id, nom_operateur AS nom FROM operateur WHERE nom_operateur IS NOT NULL ORDER BY nom_operateur'
         )->fetchAll();
@@ -65,7 +65,7 @@ try {
     }
 
     // GET /conditions-acces
-    if ($path === '/conditions-acces') {
+    if ($method === 'GET' && $path === '/conditions-acces') {
         $rows = $pdo->query(
             'SELECT id_condition AS id, condition_acces AS libelle FROM condition_d_acces WHERE condition_acces IS NOT NULL ORDER BY condition_acces'
         )->fetchAll();
@@ -74,7 +74,7 @@ try {
     }
 
     // GET /departements
-    if ($path === '/departements') {
+    if ($method === 'GET' && $path === '/departements') {
         $noms = [
             '22' => 'Côtes-d\'Armor',
             '29' => 'Finistère',
@@ -97,7 +97,7 @@ try {
     }
 
     // GET /installations/carte?annee=&dept=&nom=&prise=&puissance_min=&amenageur=
-    if ($path === '/installations/carte') {
+    if ($method === 'GET' && $path === '/installations/carte') {
         $params = [];
         $where  = ['s.latitude IS NOT NULL', 's.longitude IS NOT NULL'];
 
@@ -163,7 +163,7 @@ try {
     }
 
     // GET /installations/{id}
-    if (preg_match('#^/installations/(\d+)$#', $path, $m)) {
+    if ($method === 'GET' && preg_match('#^/installations/(\d+)$#', $path, $m)) {
         $id   = (int)$m[1];
         $stmt = $pdo->prepare('
             SELECT
@@ -208,7 +208,7 @@ try {
     }
 
     // GET /installations?amenageur=&prise=&dept=&nom=&puissance_min=&acces=&gratuit=&operateur=
-    if ($path === '/installations') {
+    if ($method === 'GET' && $path === '/installations') {
         $params = [];
         $where  = [];
 
@@ -273,7 +273,7 @@ try {
     }
 
     // GET /pdcs?station=<id_station_locale>
-    if ($path === '/pdcs') {
+    if ($method === 'GET' && $path === '/pdcs') {
         $station = $_GET['station'] ?? '';
         if (empty($station)) { echo json_encode([]); exit; }
 
@@ -299,7 +299,7 @@ try {
     }
 
     // GET /stats
-    if ($path === '/stats') {
+    if ($method === 'GET' && $path === '/stats') {
         // Total PDC (enregistrements)
         $total = (int)$pdo->query('SELECT COUNT(*) FROM pdc')->fetchColumn();
 

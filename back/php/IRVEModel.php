@@ -352,12 +352,23 @@ class IRVEModel {
             $row = $stmt->fetch();
             if (!$row) return false;   // PDC inexistant → rien à supprimer
 
-            $id_amenageur = $row['id_amenageur'];
+            $id_amenageur  = $row['id_amenageur'];
+            $id_station    = $row['id_station_locale'];
 
-            // Supprimer la station : si les FK CASCADE sont actives en base,
-            // cela supprime automatiquement tous les PDC et leurs liaisons type_prise.
+            // 1. Supprimer les liaisons type_prise de tous les PDC de la station
+            $this->db->prepare(
+                "DELETE ptp FROM pdc_type_prise ptp
+                 JOIN pdc p ON p.id_pdc = ptp.id_pdc
+                 WHERE p.id_station_locale = :id_sl"
+            )->execute([':id_sl' => $id_station]);
+
+            // 2. Supprimer tous les PDC de la station
+            $this->db->prepare("DELETE FROM pdc WHERE id_station_locale = :id_sl")
+                     ->execute([':id_sl' => $id_station]);
+
+            // 3. Supprimer la station
             $this->db->prepare("DELETE FROM station WHERE id_station_locale = :id_sl")
-                     ->execute([':id_sl' => $row['id_station_locale']]);
+                     ->execute([':id_sl' => $id_station]);
 
             // Nettoyage de l'aménageur orphelin (s'il existe et n'est plus utilisé)
             if ($id_amenageur !== null) {

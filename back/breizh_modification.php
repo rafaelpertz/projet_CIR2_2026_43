@@ -342,16 +342,21 @@ if (btnConfirmDelete) {
             const resp = await fetch(API_BASE + '/installations/' + RECORD_ID, {
                 method: 'DELETE',
             });
-            const json = await resp.json();
+
+            let json;
+            try { json = await resp.json(); } catch { json = {}; }
 
             if (!resp.ok || !json.success) {
                 confirmBox.style.display = 'none';
-                afficherErreur(json.error ?? 'Erreur lors de la suppression.');
+                afficherErreur(json.error ?? 'Erreur ' + resp.status + ' lors de la suppression.');
             } else {
                 window.location.href = 'breizh_liste.php';
             }
         } catch (err) {
             afficherErreur('Impossible de contacter l\'API : ' + err.message);
+        } finally {
+            btnConfirmDelete.disabled = false;
+            btnConfirmDelete.textContent = 'Oui, supprimer';
         }
     });
 }

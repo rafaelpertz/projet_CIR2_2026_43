@@ -8,12 +8,11 @@
 //    conformément à l'architecture REST du cahier des charges.
 // ============================================================
 
-// Échappe les caractères HTML pour affichage sécurisé
-function e($val) {
-    return htmlspecialchars((string)$val, ENT_QUOTES, 'UTF-8');
+function e($valeur): string {
+    return (string)($valeur ?? '');
 }
 
-// URL de base de l'API (calculée dynamiquement pour tous les environnements)
+$champs  = [];
 $apiBase = rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'])), '/') . '/api';
 ?>
 <!DOCTYPE html>

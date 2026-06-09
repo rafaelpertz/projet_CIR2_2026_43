@@ -4,13 +4,44 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BreizhOhm – Points de recharge en Bretagne</title>
+
+<!-- Feuille de style principale : mise en page, composants nav/hero/stats/footer -->
 <link rel="stylesheet" href="assets/breizh-charge.css">
+
+<!-- Favicon affiché dans l'onglet du navigateur -->
 <link rel="icon" type="image/png" sizes="32x32" href="assets/logo_breizh_charge_groupe43_v2.png">
+
+<!--
+  index.js — Script de la page d'accueil (chargé en "defer" : exécuté après le
+  parsing complet du DOM, sans bloquer le rendu de la page).
+
+  Au DOMContentLoaded, index.js vérifie data-page="home" (ci-dessous) puis
+  appelle loadStats() qui interroge l'API REST (GET api/stats) et peuple :
+    • les quatre compteurs  (#stat-total, #stat-types-prise, #stat-amenageurs, #stat-depts)
+    • le graphique en barres par année  (#year-chart)   via buildYearChart()
+    • le graphique en barres par dept   (#dept-chart)   via buildDeptChart()
+    • le tableau croisé                 (#cross-table)  via buildCrossTable()
+    • les cartes de connecteurs         (.connectors)   via buildConnectors()
+-->
 <script src="assets/index.js" defer></script>
 </head>
+
+<!--
+  data-page="home" : attribut lu par index.js dans le listener DOMContentLoaded
+  pour s'assurer de n'exécuter loadStats() QUE sur cette page et non sur
+  d'autres pages qui chargeraient accidentellement le même script.
+  → index.js ligne 16 : if (document.body.dataset.page === 'home')
+-->
 <body data-page="home">
 
-<!-- entête -->
+<!-- =====================================================================
+     BARRE DE NAVIGATION
+     Structure identique sur les trois pages (index / recherche / carte).
+     La classe "active" est ajoutée manuellement sur le <a> correspondant
+     à la page courante pour surligner l'onglet actif en CSS.
+     Le bouton CTA (Call-To-Action) renvoie toujours vers recherche.html.
+     Aucune logique JS sur cet élément : navigation HTML pure.
+====================================================================== -->
 <nav>
   <div class="logo">
     <div class="logo-icon">
@@ -22,6 +53,7 @@
     </div>
   </div>
   <ul>
+    <!-- class="active" → lien souligné / mis en valeur par le CSS -->
     <li><a href="index.html" class="active">Accueil</a></li>
     <li><a href="recherche.html">Recherche</a></li>
     <li><a href="carte.html">Carte</a></li>
@@ -29,9 +61,12 @@
   <a class="nav-cta" href="recherche.html">TROUVER UNE BORNE</a>
 </nav>
 
-<!-- accueil -->
-
-
+<!-- =====================================================================
+     SECTION HERO
+     Bandeau visuel d'introduction : fond semi-transparent (.hero-bg),
+     badge, titre, description et deux CTA.
+     Purement statique — aucune interaction JS.
+====================================================================== -->
 <section class="hero">
   <div class="hero-bg"></div>
   <div class="hero-content">
@@ -44,17 +79,34 @@
     </p>
     <div style="display:flex;gap:16px;flex-wrap:wrap;">
       <a class="btn-primary" href="recherche.html">RECHERCHER UNE BORNE</a>
-      <a class="btn-outline" href="carte.html">VOIR LA CARTE</a>
+      <a class="btn-outline"  href="carte.html">VOIR LA CARTE</a>
     </div>
   </div>
 </section>
 
-<!-- stats -->
+<!-- =====================================================================
+     SECTION STATISTIQUES
+     Toute cette section est peuplée dynamiquement par loadStats() dans
+     index.js après réception de la réponse GET api/stats.
+     L'API renvoie un objet JSON avec les clés :
+       total, types_prise (tableau), amenageurs, departements,
+       par_annee, par_dept, croise, types_prise (avec nb/type/pct).
+====================================================================== -->
 <section class="stats-section">
   <h2>BreizhOhm, <span>en chiffres</span></h2>
-  <p class="stats-sub">Données issues du fichier IRVE Bretagne</p>
+  <p class="stats-sub">Les données de toutes les bornes de Bretagne</p>
 
-
+  <!-- -------------------------------------------------------------------
+       COMPTEURS CHIFFRÉS
+       Chaque <div class="num"> est ciblé par son id et mis à jour dans
+       loadStats() via document.getElementById(id).textContent = valeur.
+         #stat-total       ← stats.total            (nombre total d'enregistrements)
+         #stat-types-prise ← stats.types_prise.length (nb de types de prises distincts)
+         #stat-amenageurs  ← stats.amenageurs        (nb d'aménageurs)
+         #stat-depts       ← stats.departements      (nb de départements couverts)
+       Les valeurs numériques sont formatées avec toLocaleString('fr-FR')
+       pour afficher les séparateurs de milliers français (ex : 12 345).
+  -------------------------------------------------------------------- -->
   <div class="stats-cards">
     <div class="stat-card">
       <div class="num" id="stat-total">…</div>
@@ -74,7 +126,25 @@
     </div>
   </div>
 
-  <!-- Graphiques -->
+  <!-- -------------------------------------------------------------------
+       GRAPHIQUES EN BARRES
+       Les deux <div> ci-dessous sont des conteneurs vides ; index.js y
+       injecte des barres HTML synthétiques (pas de librairie externe).
+
+       #year-chart → buildYearChart(stats.par_annee)
+         Chaque entrée du tableau par_annee contient { annee, nb }.
+         La fonction crée un .bar-row par année avec une barre dont la
+         largeur est proportionnelle au max. L'animation CSS (width: 0%
+         → largeur réelle) est déclenchée via setTimeout 200 ms pour
+         permettre au navigateur de calculer la mise en page d'abord.
+         → index.js lignes 51-70
+
+       #dept-chart → buildDeptChart(stats.par_dept)
+         Même logique mais par département. Le code département (code_dep)
+         est traduit en libellé lisible via le dictionnaire DEPT_LABELS.
+         L'animation utilise un délai de 300 ms.
+         → index.js lignes 72-92
+  -------------------------------------------------------------------- -->
   <div class="charts-grid">
     <div>
       <p class="chart-title">Installations par année</p>
@@ -86,7 +156,15 @@
     </div>
   </div>
 
-  
+  <!-- -------------------------------------------------------------------
+       TABLEAU CROISÉ ANNÉE × DÉPARTEMENT
+       Le <thead> est statique (colonnes fixes : 29, 22, 56, 35).
+       Le <tbody id="cross-table"> est peuplé par buildCrossTable(stats.croise).
+       Chaque entrée du tableau croise contient { annee, d29, d22, d56, d35 }.
+       La fonction crée un <tr> par ligne avec les quatre valeurs, formatées
+       en français (toLocaleString). Les valeurs nulles/undefined affichent 0.
+       → index.js lignes 94-108
+  -------------------------------------------------------------------- -->
   <p class="chart-title">Installations par année et par département</p>
   <div class="table-wrapper-stats">
     <table class="cross-table" id="cross-table">
@@ -99,19 +177,35 @@
           <th>35 – Ille-et-Vilaine</th>
         </tr>
       </thead>
+      <!-- tbody vide : rempli dynamiquement par buildCrossTable() dans index.js -->
       <tbody>
-        
       </tbody>
     </table>
   </div>
 
- 
+  <!-- -------------------------------------------------------------------
+       GRILLE DE CONNECTEURS (TYPES DE PRISE)
+       .connectors est un conteneur vide rempli par buildConnectors(stats.types_prise).
+       Chaque entrée du tableau types_prise contient { type, nb, pct }.
+       La fonction crée un .connector-card par type avec :
+         .cn  → nombre d'installations (nb)
+         .ct  → libellé du type de prise (type)
+         .cp  → pourcentage du total (pct %)
+       Le tableau colors[] permet d'appliquer une classe CSS colorée
+       sur certaines cartes (ex : 'red' pour les deux plus courants).
+       → index.js lignes 110-124
+       Commentaire inline original : "rempli dynamiquement par buildConnectors()"
+  -------------------------------------------------------------------- -->
   <p class="chart-title" style="margin-top:48px;">Types de prise</p>
   <div class="connectors">
-    <!-- rempli dynamiquement par buildConnectors() -->
+    <!-- rempli dynamiquement par buildConnectors() dans index.js (lignes 110-124) -->
   </div>
 
-  <!-- Accès rapides -->
+  <!-- -------------------------------------------------------------------
+       ACCÈS RAPIDES (CALL-TO-ACTION)
+       Deux cartes de navigation vers les pages Recherche et Carte.
+       Purement statiques — aucune logique JS.
+  -------------------------------------------------------------------- -->
   <div class="home-ctas">
     <a class="home-cta-card" href="recherche.html">
       <div class="home-cta-icon">🔍</div>
@@ -126,7 +220,10 @@
   </div>
 </section>
 
-<!-- footer -->
+<!-- =====================================================================
+     FOOTER
+     Pied de page statique commun aux trois pages.
+====================================================================== -->
 <footer>
   <p>© 2026 <span>BreizhOhm</span> — Rafael Touzé & Florian Muller —  Groupe 13 · CIR2 2026 · ISEN Ouest</p>
 </footer>

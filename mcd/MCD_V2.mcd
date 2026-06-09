@@ -1,0 +1,39 @@
+AMENAGEUR: id_amenageur, nom_amenageur, siren_amenageur, contact_amenageur
+Finance, 0N AMENAGEUR, 11 STATION
+STATION: id_station_locale, id_station_itinerance, nom_station, implantation_station, adresse_station, code_insee, code_dep, longitude, latitude, raccordement
+Contient, 11 STATION, 1N PDC
+PDC: id_pdc, puissance_nominale, date_mise_service, cable_t2_attache, gratuit, paiment_acte, paiment_cb, tarification
+Est_equipe_de, 0N PDC, 0N TYPE_PRISE
+TYPE_PRISE: id_type_prise, libelle_type_prise
+
+:
+:
+Exploite, 0N OPERATEUR, 11 STATION
+:
+A_horaires, 01 PDC, 0N HORAIRES
+:
+:
+
+:
+:
+OPERATEUR: id_operateur, nom_operateur, contact_operateur, tel_operateur
+:
+HORAIRES: id_horaires, horaires
+:
+:
+
+:
+:
+Possede, 0N ENSEIGNE, 11 STATION
+:
+A_condition, 01 PDC, 0N CONDITION_D_ACCES
+:
+:
+
+:
+:
+ENSEIGNE: id_enseigne, nom_enseigne
+:
+CONDITION_D_ACCES: id_condition, condition_acces
+:
+:

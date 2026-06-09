@@ -8,11 +8,15 @@ const API_BASE = 'api';
 let carteLeaflet       = null;
 let routeLayerPolyline = null;
 let routeRayon         = 10;
+let heatLayer          = null;   // couche leaflet-heat (null = inactive)
+let clusterLayer       = null;   // couche MarkerCluster (null = pas encore créée)
+let currentPoints      = [];     // derniers points chargés (pour heatmap + re-render)
 
 document.addEventListener('DOMContentLoaded', () => {
   if (document.body.dataset.page === 'carte') {
     chargerFiltresCarte();
     initCarteLeaflet();
+    afficherCarte();
   }
 });
 
@@ -101,21 +105,40 @@ async function afficherCarte() {
 }
 
 function afficherMarqueurs(points) {
-  carteLeaflet.eachLayer(layer => {
-    if (layer instanceof L.Marker) carteLeaflet.removeLayer(layer);
-  });
+  // Supprimer l'ancien cluster s'il existe
+  if (clusterLayer) {
+    carteLeaflet.removeLayer(clusterLayer);
+    clusterLayer = null;
+  }
+
+  // Mémoriser les points pour la heatmap ; la mettre à jour si elle est active
+  currentPoints = points;
+  if (heatLayer) {
+    heatLayer.setLatLngs(points
+      .filter(pt => !isNaN(parseFloat(pt.lat)) && !isNaN(parseFloat(pt.lon)))
+      .map(pt => [parseFloat(pt.lat), parseFloat(pt.lon)])
+    );
+  }
 
   document.getElementById('carte-count').textContent = points.length;
+
+  // Ne pas afficher les marqueurs si la heatmap est active
+  if (heatLayer) return;
+
+  clusterLayer = L.markerClusterGroup({ animate: true, animateAddingMarkers: true });
 
   points.forEach(pt => {
     const lat = parseFloat(pt.lat);
     const lon = parseFloat(pt.lon);
     if (isNaN(lat) || isNaN(lon)) return;
 
-    const marker = L.marker([lat, lon]).addTo(carteLeaflet);
+    const marker = L.marker([lat, lon]);
     marker.bindTooltip(pt.commune || '—', { direction: 'top', offset: [0, -8] });
     marker.on('click', () => ouvrirPopupStation(marker, pt.station_id, pt.commune));
+    clusterLayer.addLayer(marker);
   });
+
+  carteLeaflet.addLayer(clusterLayer);
 }
 
 /* ============================================================
@@ -169,6 +192,40 @@ async function ouvrirPopupStation(marker, stationId, commune) {
       '<div class="popup-error">⚠ Erreur de chargement</div>'
     );
     console.error('Erreur PDC station :', err);
+  }
+}
+
+/* ============================================================
+   HEATMAP
+   ============================================================ */
+
+function toggleHeatmap() {
+  const btn = document.getElementById('heatmap-toggle');
+
+  if (heatLayer) {
+    // Désactiver : retirer la heatmap, réafficher les clusters
+    carteLeaflet.removeLayer(heatLayer);
+    heatLayer = null;
+    btn.classList.remove('active');
+    afficherMarqueurs(currentPoints);
+  } else {
+    // Activer : masquer le cluster, créer la couche de chaleur
+    if (clusterLayer) {
+      carteLeaflet.removeLayer(clusterLayer);
+    }
+
+    const latlngs = currentPoints
+      .filter(pt => !isNaN(parseFloat(pt.lat)) && !isNaN(parseFloat(pt.lon)))
+      .map(pt => [parseFloat(pt.lat), parseFloat(pt.lon)]);
+
+    heatLayer = L.heatLayer(latlngs, {
+      radius:  25,
+      blur:    18,
+      maxZoom: 12,
+      gradient: { 0.2: '#1d4ed8', 0.5: '#f59e0b', 0.8: '#e63946', 1.0: '#fff' },
+    }).addTo(carteLeaflet);
+
+    btn.classList.add('active');
   }
 }
 
@@ -344,6 +401,8 @@ async function chercherItineraire() {
 
     const routeCoords = await calculerRoute(ptDepart, ptArrivee);
 
+    // Supprimer le cluster, la polyline précédente et les marqueurs départ/arrivée
+    if (clusterLayer) { carteLeaflet.removeLayer(clusterLayer); clusterLayer = null; }
     carteLeaflet.eachLayer(layer => {
       if (layer instanceof L.Marker || layer instanceof L.Polyline) {
         carteLeaflet.removeLayer(layer);

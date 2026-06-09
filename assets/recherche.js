@@ -21,9 +21,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const detailId = params.get('detail');
     if (detailId) {
       afficherDetail(parseInt(detailId));
+    } else {
+      chargerResultatsInitiaux();
     }
   }
 });
+
+async function chargerResultatsInitiaux() {
+  try {
+    const reponse = await fetch(`${API_BASE}/installations?limit=20&random=1`);
+    if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+    const donnees = await reponse.json();
+    afficherTableauResultats(donnees);
+  } catch (err) {
+    console.error('Erreur chargement initial :', err);
+  }
+}
 
 /* ============================================================
    NAVIGATION ENTRE SOUS-VUES (search ↔ detail)

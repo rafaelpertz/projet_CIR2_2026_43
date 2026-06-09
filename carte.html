@@ -4,15 +4,138 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BreizhOhm – Carte</title>
+
+<!-- Favicon -->
 <link rel="icon" type="image/png" sizes="32x32" href="assets/logo_breizh_charge_groupe43_v2.png">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<link rel="stylesheet" href="assets/breizh-charge.css">
+
+<!--
+  Leaflet 1.9.4 — bibliothèque cartographique.
+  La CSS gère l'affichage de la carte et des contrôles (zoom, attribution).
+  Le JS expose l'objet global L (ex: L.map, L.marker, L.polyline...) utilisé
+  massivement dans carte.js.
+  Important : Leaflet doit être chargé AVANT carte.js (pas de defer sur Leaflet).
+-->
+<link  rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link  rel="stylesheet" href="assets/breizh-charge.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- leaflet.markercluster : clustering animé des marqueurs -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+<!-- leaflet-heat : plugin heatmap pour Leaflet (doit être chargé après Leaflet) -->
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+<style>
+  /* Clusters MarkerCluster — thème BreizhOhm */
+  .marker-cluster-small,
+  .marker-cluster-medium,
+  .marker-cluster-large {
+    background-clip: padding-box;
+  }
+  .marker-cluster-small div        { background-color: rgba(230,57,70,0.75); }
+  .marker-cluster-small            { background-color: rgba(230,57,70,0.25); }
+  .marker-cluster-medium div       { background-color: rgba(200,40,55,0.85); }
+  .marker-cluster-medium           { background-color: rgba(200,40,55,0.3);  }
+  .marker-cluster-large div        { background-color: rgba(160,20,35,0.95); }
+  .marker-cluster-large            { background-color: rgba(160,20,35,0.35); }
+  .marker-cluster div {
+    width: 30px; height: 30px; margin-left: 5px; margin-top: 5px;
+    text-align: center; border-radius: 15px;
+    font: bold 12px 'Segoe UI', Arial, sans-serif;
+    color: #fff; line-height: 30px;
+  }
+  .marker-cluster { border-radius: 20px; }
+
+  /* Bouton toggle heatmap flottant (coin supérieur droit de la carte) */
+  .heatmap-toggle {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    background: rgba(13,13,13,0.92);
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #f0f0f0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    transition: border-color .2s, background .2s;
+    white-space: nowrap;
+  }
+  .heatmap-toggle:hover {
+    border-color: #e63946;
+  }
+  .heatmap-toggle.active {
+    background: rgba(230,57,70,0.18);
+    border-color: #e63946;
+    color: #e63946;
+  }
+  .heatmap-toggle-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #555;
+    transition: background .2s;
+  }
+  .heatmap-toggle.active .heatmap-toggle-dot {
+    background: #e63946;
+    box-shadow: 0 0 6px #e63946;
+  }
+</style>
+
+<!--
+  carte.js — Script de la page Carte (defer : après parsing DOM complet).
+
+  Au DOMContentLoaded (ligne 12), vérifie data-page="carte" puis :
+    1. chargerFiltresCarte() → peuple #carte-prise et #carte-amenageur via l'API.
+       → carte.js lignes 23-26
+    2. initCarteLeaflet() → crée la carte Leaflet centrée sur la Bretagne
+       (coord [48.15, -2.9], zoom 8) dans #carte-leaflet-container.
+       → carte.js lignes 59-68
+
+  Fonctionnalités principales :
+    • afficherCarte()        : collecte les filtres, GET api/installations/carte,
+                               appelle afficherMarqueurs() pour placer les pins.
+                               → carte.js lignes 70-101
+    • afficherMarqueurs()    : supprime les anciens marqueurs, place un L.marker
+                               par point avec tooltip commune et popup lazily chargé
+                               via ouvrirPopupStation() au clic.
+                               → carte.js lignes 103-119
+    • ouvrirPopupStation()   : GET api/pdcs?station=<id> pour afficher les points
+                               de charge de la station dans la popup Leaflet.
+                               → carte.js lignes 125-173
+    • toggleRoutePanel()     : ouvre/ferme le panneau itinéraire coulissant.
+                               → carte.js lignes 179-187
+    • chercherItineraire()   : géocode les villes (Nominatim), calcule l'itinéraire
+                               (OSRM), filtre les bornes à proximité (haversine),
+                               affiche le tracé et les bornes sur la carte.
+                               → carte.js lignes 327-394
+
+  Variables globales (carte.js lignes 8-10) :
+    carteLeaflet        : instance L.map (null jusqu'à initCarteLeaflet)
+    routeLayerPolyline  : polyline de l'itinéraire (null si aucun trajet)
+    routeRayon          : rayon de recherche autour de la route (défaut 10 km)
+-->
 <script src="assets/carte.js" defer></script>
 </head>
+
+<!--
+  data-page="carte" : lu par carte.js pour conditionner l'initialisation.
+  → carte.js ligne 13 : if (document.body.dataset.page === 'carte')
+-->
 <body data-page="carte">
 
-<!-- entête -->
+<!-- =====================================================================
+     BARRE DE NAVIGATION (identique aux autres pages)
+     class="active" sur le lien "Carte".
+====================================================================== -->
 <nav>
   <div class="logo">
     <a href="index.html" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
@@ -33,8 +156,7 @@
   <a class="nav-cta" href="recherche.html">TROUVER UNE BORNE</a>
 </nav>
 
-<!-- carte -->
-
+<!-- Hero statique de la page carte -->
 <div class="search-hero">
   <div class="search-hero-content">
     <h1>Carte des bornes de recharge</h1>
@@ -43,17 +165,41 @@
   </div>
 </div>
 
-<!-- Formulaire carte -->
+<!-- =====================================================================
+     FORMULAIRE DE FILTRES CARTE
+     Les valeurs sont lues par afficherCarte() (carte.js lignes 70-101)
+     au clic du bouton AFFICHER (onclick="afficherCarte()").
+
+     Les paramètres non vides alimentent GET api/installations/carte?...
+     La réponse est un tableau de points { station_id, lat, lon, commune }
+     transmis à afficherMarqueurs().
+
+     Ces mêmes filtres sont aussi relus dans chercherItineraire() (lignes
+     367-378) pour filtrer les bornes lors d'une recherche d'itinéraire.
+
+     Champs :
+       #carte-nom          → paramètre "nom"           (filtre par nom station)
+       #carte-annee        → paramètre "annee"          (options statiques 2014-2026)
+       #carte-dept         → paramètre "dept"           (options statiques 4 depts)
+       #carte-prise        → paramètre "prise"          (peuplé par GET api/types-prise)
+       #carte-amenageur    → paramètre "amenageur"      (peuplé par GET api/amenageurs)
+       #carte-puissance-min → paramètre "puissance_min" (filtre numérique)
+====================================================================== -->
 <section class="criteria-section">
   <h2 style="margin-bottom:24px;">Filtrer l'affichage :</h2>
   <div class="search-form">
+
+    <!-- Champ texte : filtre par nom de station (LIKE en SQL côté API) -->
     <div class="form-field">
       <label for="carte-nom">Nom de la station</label>
       <div class="input-icon-wrap">
+        <!-- Icône loupe SVG inline -->
         <span class="input-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
         <input type="text" id="carte-nom" placeholder="ex : Leclerc, parking…">
       </div>
     </div>
+
+    <!-- Options statiques : années d'installation (2014 → 2026) -->
     <div class="form-field">
       <label for="carte-annee">Année d'installation</label>
       <select id="carte-annee">
@@ -73,6 +219,8 @@
         <option value="2026">2026</option>
       </select>
     </div>
+
+    <!-- Options statiques : les 4 départements bretons avec leur code INSEE -->
     <div class="form-field">
       <label for="carte-dept">Département</label>
       <select id="carte-dept">
@@ -83,45 +231,101 @@
         <option value="35">35 – Ille-et-Vilaine</option>
       </select>
     </div>
+
+    <!--
+      Peuplé dynamiquement par chargerFiltresCarte() → chargerSelect()
+      via GET api/types-prise.
+      → carte.js ligne 24
+    -->
     <div class="form-field">
       <label for="carte-prise">Type de prise</label>
       <select id="carte-prise">
         <option value="">— Tous —</option>
       </select>
     </div>
+
+    <!--
+      Peuplé dynamiquement via GET api/amenageurs?limit=20&random=1
+      (20 aménageurs tirés aléatoirement pour ne pas surcharger la liste).
+      → carte.js ligne 25
+    -->
     <div class="form-field">
       <label for="carte-amenageur">Aménageur</label>
       <select id="carte-amenageur">
         <option value="">— Tous —</option>
       </select>
     </div>
+
+    <!-- Filtre numérique sur puissance_nominale >= valeur -->
     <div class="form-field">
       <label for="carte-puissance-min">Puissance min (kW)</label>
       <div class="input-icon-wrap">
+        <!-- Icône éclair SVG inline -->
         <span class="input-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
         <input type="number" id="carte-puissance-min" min="0" step="1" placeholder="ex : 50">
       </div>
     </div>
 
+    <!--
+      Bouton principal :
+      onclick="afficherCarte()" → collecte les filtres, fetch GET api/installations/carte,
+      passe le résultat à afficherMarqueurs() qui place les pins sur la carte Leaflet.
+      → carte.js afficherCarte() lignes 70-101
+    -->
     <button class="validate-btn" onclick="afficherCarte()">AFFICHER</button>
   </div>
 </section>
 
-<!-- Carte Leaflet + Panneau itinéraire -->
+<!-- =====================================================================
+     SECTION CARTE + PANNEAU ITINÉRAIRE
+     Structure :  .map-wrapper
+                   ├── .route-panel       (panneau coulissant gauche)
+                   ├── .route-toggle      (bouton flèche toujours visible)
+                   └── #carte-leaflet-container  (carte Leaflet)
+====================================================================== -->
 <section class="map-section">
   <div class="map-header">
-
+    <!--
+      #carte-count : mis à jour à chaque appel à afficherMarqueurs()
+      avec le nombre de stations placées sur la carte.
+      → carte.js ligne 108 : document.getElementById('carte-count').textContent = points.length
+      Aussi mis à jour dans chercherItineraire() avec le nb de bornes filtrées.
+      → carte.js ligne 386
+    -->
     <h2>Stations affichées : <span id="carte-count">—</span></h2>
     <p>Cliquez sur un marqueur pour voir les informations. Utilisez le panneau <strong>Itinéraire</strong> pour trouver les bornes sur votre route.</p>
   </div>
 
-  <!-- Wrapper relatif qui contient la carte + le panneau coulissant -->
+  <!--
+    .map-wrapper : conteneur relatif (position: relative en CSS) qui permet
+    de superposer le panneau itinéraire (.route-panel) et le bouton toggle
+    (.route-toggle) au-dessus de la carte Leaflet via position: absolute.
+  -->
   <div class="map-wrapper">
 
-    <!-- =====================================================
-         PANNEAU ITINÉRAIRE (coulisse depuis la gauche)
-         Inspiré de l'interface Apple Maps / Google Maps
-    ===================================================== -->
+    <!-- =================================================================
+         PANNEAU ITINÉRAIRE
+         Élément coulissant depuis la gauche (transform: translateX(-100%)
+         en CSS par défaut → translateX(0) quand la classe "open" est ajoutée).
+         Ouvert/fermé par toggleRoutePanel() → carte.js lignes 179-187.
+
+         Workflow complet de recherche d'itinéraire (chercherItineraire()) :
+           1. Géocodage Nominatim des deux villes saisies (geocoderVille())
+              → carte.js lignes 196-206 — API: nominatim.openstreetmap.org
+           2. Calcul de l'itinéraire routier (calculerRoute())
+              → carte.js lignes 208-220 — API: router.project-osrm.org
+              Retourne un tableau de coordonnées GeoJSON [lon, lat].
+           3. Tracé de la polyline sur la carte (afficherTrace())
+              + marqueurs départ (vert) / arrivée (rouge) avec icônes DIV.
+              → carte.js lignes 261-292
+           4. Calcul de la bbox englobante + buffer 0.15° → GET api/installations/carte?bbox=...
+              pour ne récupérer que les bornes proches de la route.
+           5. Filtre géométrique précis : filtrerBornesSurRoute() teste chaque borne
+              contre chaque segment de la polyline via distancePointSegment()
+              (projection du point sur le segment + haversine).
+              → carte.js lignes 222-259
+           6. Affichage des bornes filtrées sur la carte + liste dans #route-results.
+    ================================================================== -->
     <div class="route-panel" id="route-panel">
 
       <div class="route-panel-header">
@@ -134,59 +338,132 @@
         </div>
       </div>
 
-      <!-- Saisie départ / arrivée (style Maps) -->
+      <!-- Champs de saisie départ / arrivée -->
       <div class="route-inputs">
+        <!--
+          #route-depart  : nom de ville de départ — lu par chercherItineraire()
+          .route-dot.green : pastille verte indicatrice (CSS uniquement)
+        -->
         <div class="route-input-row">
           <span class="route-dot green"></span>
           <input type="text" id="route-depart" placeholder="Départ — ex : Brest" autocomplete="off"/>
         </div>
+        <!-- Ligne verticale de connexion visuelle entre les deux dots (CSS) -->
         <div class="route-connector-line"></div>
+        <!--
+          #route-arrivee : nom de ville d'arrivée — lu par chercherItineraire()
+          .route-dot.red : pastille rouge indicatrice (CSS uniquement)
+        -->
         <div class="route-input-row">
           <span class="route-dot red"></span>
           <input type="text" id="route-arrivee" placeholder="Arrivée — ex : Vannes" autocomplete="off"/>
         </div>
       </div>
 
-      <!-- Sélection du rayon de recherche -->
+      <!-- -----------------------------------------------------------
+           SÉLECTION DU RAYON DE RECHERCHE
+           Trois boutons "chips" : 5 km, 10 km (actif par défaut), 20 km.
+           onclick="setRayon(km)" met à jour la variable globale routeRayon
+           et bascule la classe CSS "active" sur le chip cliqué.
+           routeRayon est lu dans filtrerBornesSurRoute() pour décider si
+           une borne est "sur la route" ou non.
+           → carte.js setRayon() lignes 189-194
+           → carte.js variable globale routeRayon ligne 10 (défaut : 10)
+      ------------------------------------------------------------ -->
       <div class="route-rayon">
         <label>Rayon autour de la route</label>
         <div class="rayon-chips">
-          <button class="rayon-chip" data-km="5"  onclick="setRayon(5)">5 km</button>
+          <button class="rayon-chip"        data-km="5"  onclick="setRayon(5)">5 km</button>
           <button class="rayon-chip active" data-km="10" onclick="setRayon(10)">10 km</button>
-          <button class="rayon-chip" data-km="20" onclick="setRayon(20)">20 km</button>
+          <button class="rayon-chip"        data-km="20" onclick="setRayon(20)">20 km</button>
         </div>
       </div>
 
-      <!-- Bouton de recherche -->
+      <!--
+        Bouton de lancement de la recherche d'itinéraire.
+        onclick="chercherItineraire()" — fonction principale du panneau.
+        Enchaîne : géocodage → calcul route → chargement bornes → filtrage → affichage.
+        → carte.js chercherItineraire() lignes 327-394
+      -->
       <button class="route-search-btn" onclick="chercherItineraire()">
         Trouver les bornes
       </button>
 
-      <!-- Statut (chargement, erreurs) -->
+      <!--
+        Zone de statut : messages de progression et d'erreur.
+        Mise à jour par setRouteStatus(msg, type) qui change le textContent
+        et la classe CSS (ex: 'loading', 'warn', 'error', '').
+        → carte.js setRouteStatus() lignes 294-298
+        Messages affichés pendant chercherItineraire() :
+          "Géocodage des villes…"      (type 'loading')
+          "Calcul de l'itinéraire…"    (type 'loading')
+          "Chargement des bornes…"     (type 'loading')
+          "" (vidé en fin de succès)   ou "❌ <message d'erreur>"
+      -->
       <div id="route-status" class="route-status"></div>
 
-      <!-- Liste des résultats -->
+      <!--
+        Liste des bornes trouvées sur le trajet.
+        Peuplée par afficherResultatsRoute(bornes) avec un <ul> de .route-list-item.
+        Chaque item affiche commune, puissance, type de prise et un lien
+        vers recherche.html?detail=<id>.
+        → carte.js afficherResultatsRoute() lignes 300-325
+      -->
       <div id="route-results" class="route-results"></div>
 
     </div>
     <!-- fin .route-panel -->
 
-    <!-- Bouton toggle (toujours visible sur le bord gauche de la carte) -->
+    <!-- =================================================================
+         BOUTON TOGGLE DU PANNEAU ITINÉRAIRE
+         Toujours visible sur le bord gauche de la carte (position: absolute).
+         onclick="toggleRoutePanel()" → ajoute/retire la classe "open" sur
+         #route-panel (déclenchant l'animation CSS translateX) et bascule
+         le label entre "Itinéraire" et "Fermer".
+         → carte.js toggleRoutePanel() lignes 179-187
+    ================================================================== -->
     <button class="route-toggle" id="route-toggle" onclick="toggleRoutePanel()">
       <span class="route-toggle-arrow" id="toggle-arrow">▶</span>
       <span class="route-toggle-label" id="toggle-label">Itinéraire</span>
     </button>
 
-    <!-- La carte Leaflet -->
+    <!-- =================================================================
+         CONTENEUR DE LA CARTE LEAFLET
+         Div vide dont la hauteur est définie en CSS (.map-container).
+         Ciblé par initCarteLeaflet() via L.map('carte-leaflet-container').
+         Leaflet y injecte canvas/SVG + contrôles de zoom.
+
+         Cycle de vie :
+           1. initCarteLeaflet() crée la carte centrée sur la Bretagne au chargement.
+              → carte.js lignes 59-68
+           2. afficherMarqueurs() ajoute/supprime des L.marker à chaque filtre.
+              → carte.js lignes 103-119
+           3. afficherTrace() ajoute une L.polyline (itinéraire) + 2 marqueurs
+              départ/arrivée, puis ajuste le zoom avec fitBounds().
+              → carte.js lignes 261-292
+           4. Popup lazily chargée : au clic sur un marqueur, ouvrirPopupStation()
+              ouvre d'abord une popup "Chargement…" puis la remplace avec le
+              contenu complet reçu de GET api/pdcs?station=<id>.
+              → carte.js lignes 125-173
+    ================================================================== -->
     <div id="carte-leaflet-container" class="map-container"></div>
 
+    <!--
+      Bouton toggle Heatmap (coin supérieur droit de la carte).
+      onclick="toggleHeatmap()" → active/désactive la couche de densité.
+      → carte.js toggleHeatmap()
+    -->
+    <button class="heatmap-toggle" id="heatmap-toggle" onclick="toggleHeatmap()">
+      <span class="heatmap-toggle-dot" id="heatmap-dot"></span>
+      Densité
+    </button>
 
   </div>
   <!-- fin .map-wrapper -->
 
 </section>
 
-<!-- footer -->
+<!-- Footer statique commun aux trois pages -->
 <footer>
   <p>© 2026 <span>BreizhOhm</span> — Rafael Touzé & Florian Muller — Groupe 13 · CIR2 2026 · ISEN Ouest</p>
 </footer>
